@@ -2,13 +2,7 @@
 express = require 'express'
 less = require 'less'
 eco = require 'eco'
-Manifest = require('./app/manifest').Manifest
-
-global.manifest = new Manifest();
-if process.argv.length > 0
-    console.log 'Using manifest: ' + process.argv[0]
-    global.manifest.on 'loaded', -> console.log 'Manifest loaded'
-    global.manifest.load process.argv[0]
+stores = require './app/stores'
 
 app = express.createServer()
 
@@ -38,14 +32,35 @@ app.configure 'production', ->
     app.use express.errorHandler()
 
 #-----------------------------------------------------------------
-# ROUTES
+# CORE
 
-actions = require './app/actions'
-app.get '/', actions.index
-app.get '/load', actions.load
-app.get '/viewer', actions.viewer
-app.get '/page', actions.page
+argv = []
+options = 
+    title: 'Beautiful Docs'
+    manifests: []
 
-#-----------------------------------------------------------------
+for arg in process.argv
+    if arg.substr(0, 2) == '--'
+        parts = arg.split '='
+        options[parts[0].substr(2)] = parts[1] || true
+    else
+        argv.push arg
+    
+store = stores.factory options.store || 'memory'
 
-app.listen(8080);
+startServer = ->
+    require('./app/actions').actions app, store, options
+    port = options.port || 8080
+    console.log 'Starting server on port ' + port
+    app.listen port
+
+if argv.length > 0
+    filesToLoad = argv.length
+    for file in argv
+        console.log 'Loading manifest from ' + file
+        store.create file, (manifest) -> 
+            options.manifests.push manifest
+            if --filesToLoad == 0 then startServer()
+else
+    startServer()
+

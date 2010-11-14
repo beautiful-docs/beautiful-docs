@@ -12,11 +12,13 @@ class Manifest extends events.EventEmitter
         @reset()
         
     reset: ->
+        @key = ''
         @title = 'Documentation'
-        @html = {}
         @home = ''
+        @pages = []
         @files = []
         @tableOfContent = []
+        @css = false
         @loaded = false
         
     load: (filename) ->
@@ -25,6 +27,8 @@ class Manifest extends events.EventEmitter
         @readUri @filename, (data) =>
             manifest = JSON.parse(data)
             @title = manifest.title || ''
+            @key = @title.toLowerCase().replace(' ', '-')
+            @css = manifest.css || false
             
             files = manifest.files || []
             files.unshift manifest.home
@@ -35,8 +39,8 @@ class Manifest extends events.EventEmitter
                     if i == 0
                         @home = md(data)
                     else
-                        @files[i - 1] = filename: files[i], data: data
-                        @html[files[i]] = md(data)
+                        @files[i] = files[i]
+                        @pages[i] = md(data)
                         
                     if --loaded_files == 0
                         @buildTableOfCOntent()
@@ -46,17 +50,21 @@ class Manifest extends events.EventEmitter
     readUri: (uri, callback) ->
         if uri.match /^https?:\/\//
             urlInfo = url.parse uri
-            port = if urlInfo.protocol == 'http:' then 80 else 443
+            port = urlInfo.port || if urlInfo.protocol == 'http:' then 80 else 443
+            reqPath = urlInfo.pathname
+            reqPath += urlInfo.search if urlInfo.search
             client = http.createClient port, urlInfo.hostname
-            url = urlInfo.pathname
-            url += urlInfo.search if urlInfo.search
-            request = client.request 'GET', url, host: urlInfo.hostname
-            request.on 'response', (response) =>
+            request = client.request 'GET', reqPath, host: urlInfo.hostname
+            request.on 'response', (response) ->
                 data = ''
-                response.on 'data', (chunk) -> data += chunck
-                response.on 'en', => callback data
+                response.on 'data', (chunk) -> data += chunk
+                response.on 'end', -> callback data
+            if request.end
+                request.end()
+            else
+                request.close()
         else
-            fs.readFile uri, (err, data) =>
+            fs.readFile uri, (err, data) ->
                 if err then throw err
                 callback data.toString()
                 
@@ -72,19 +80,34 @@ class Manifest extends events.EventEmitter
             
     buildTableOfCOntent: ->
         @tableOfContent = []
-        for file in @files
-            titles = file.data.match /^#+ (.+)$/gim
+        for i of @files
+            hTags = @pages[i].match /<h([1-6])>.+<\/h\1>/gi
             currentLevel = 1
             scope = @tableOfContent
-            for title in titles || []
-                level = title.indexOf ' '
-                title = title.substr(title.indexOf(' ') + 1)
-                entry = filename: file.filename, title: title, childs: []
+            for hTag in hTags || []
+                level = parseInt hTag.substr(2, 1)
+                title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
+                anchor = title.toLowerCase().replace ' ', '-'
+                entry = 
+                    index: i
+                    filename: @files[i].filename
+                    title: title
+                    anchor: anchor
+                    childs: []
+                    
+                @pages[i] = @pages[i].replace hTag, '<a name="' + anchor + '"></a>' + hTag
                 
                 scope = @tableOfContent if level < currentLevel
                 scope.push entry
                 scope = entry.childs if level == 1
                 currentLevel = level
+                
+    serialize: ->
+    	JSON.stringify
+    		title: @title
+    		toc: @tableOfContent
+    		home: @home
+    		html: @html
         
             
 exports.Manifest = Manifest

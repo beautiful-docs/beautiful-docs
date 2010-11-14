@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= @manifest.title %></title>
+        <%- @partial 'assets', locals: { manifest: @manifest } %>
+    </head>
+    <body>
+        <%- @partial 'viewer', locals: { manifest: @manifest, body: @body, page: 'iframe' } %>
+    </body>
+</html>

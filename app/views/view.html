@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= @manifest.title %></title>
+        <%- @partial 'assets', locals: { manifest: @manifest } %>
+    </head>
+    <body>
+        <header id="header">
+            <h1><a href="/view/<%= @manifest.key %>"><%= @manifest.title %></a></h1>
+            <nav id="switch">
+                <a href="/">Switch</a>
+            </nav>
+        </header>
+        <%- @partial 'viewer', locals: { manifest: @manifest, body: @body } %>
+    </body>
+</html>
