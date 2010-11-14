@@ -1,0 +1,133 @@
+
+@header_color_top: #f9c667;
+@header_color_bottom: #f79621;
+@header_border_color: #db7700;
+@header_text_color: #221302;
+@sidebar_border_color: #ccc;
+@content_link_color: #d08708;
+
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4em;
+}
+
+#header {
+    background: @header_color_top;
+    background: -moz-linear-gradient(top, @header_color_top 0%, @header_color_bottom 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,@header_color_top), color-stop(100%,@header_color_bottom));
+    border-bottom: 3px solid @header_border_color;
+    height: 80px;
+    position: relative;
+    
+    h1 {
+        color: @header_text_color;
+        font-family: 'Molengo', arial, serif;
+        font-size: 50px;
+        left: 25px;
+        position: absolute;
+        text-shadow: #9a672a 1px 1px 2px;
+        top: 27px;
+    }
+}
+
+#sidebar {
+    border-right: 1px solid @sidebar_border_color;
+    float: left;
+    padding: 30px;
+    width: 230px;
+    
+    input#search {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        margin-bottom: 20px;
+        padding: 4px 0;
+        width: 100%;
+    }
+    
+    #toc {
+        li {
+            font-size: 16px;
+            margin: 14px 0px;
+            
+            a {
+                color: #555;
+                text-decoration: none;
+            }
+        }
+        > ol > li {
+            font-weight: bold;
+            margin-bottom: 20px;
+            
+            li {
+                font-weight: normal;
+                margin-left: 15px;
+                a {
+                    color: #777;
+                }
+            }
+        }
+    }
+}
+
+#content {
+    border-left: 1px solid @sidebar_border_color;
+    color: #444;
+    float: left;
+    margin-left: -1px;
+    padding: 10px 40px 80px 30px;
+    width: 700px;
+    
+    h1 {
+        font-size: 32px;
+        margin: 15px 0 25px 0;
+    }
+    
+    h2 {
+        border-bottom: 2px solid #ccc;
+        font-size: 24px;
+        margin: 30px 0 15px 0;
+        padding-bottom: 7px;
+    }
+    
+    p {
+        margin: 15px 0;
+    }
+    
+    a {
+        color: @content_link_color;
+        text-decoration: none;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
+    
+    ul {
+        list-style: disc;
+        margin: 15px 0;
+        margin-left: 30px;
+        
+        li {
+            margin: 5px 0;
+        }
+    }
+    
+    pre {
+        background: #f1f1f1;
+        border: 1px solid #ccc;
+        margin: 15px 0;
+        padding: 7px;
+    }
+}
+
+#footer {
+    border-top: 1px solid @sidebar_border_color;
+    clear: both;
+    color: #999;
+    padding: 10px;
+    
+    a {
+        color: #999;
+    }
+}
