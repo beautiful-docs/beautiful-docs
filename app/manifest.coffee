@@ -27,7 +27,7 @@ class Manifest extends events.EventEmitter
         @readUri @filename, (data) =>
             manifest = JSON.parse(data)
             @title = manifest.title || ''
-            @key = @title.toLowerCase().replace(' ', '-')
+            @key = @title.toLowerCase().replace(' ', '')
             @css = manifest.css || false
             
             files = manifest.files || []
