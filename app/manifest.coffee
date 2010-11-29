@@ -86,6 +86,7 @@ class Manifest extends events.EventEmitter
             scope = @tableOfContent
             for hTag in hTags || []
                 level = parseInt hTag.substr(2, 1)
+                if level > 2 then continue
                 title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
                 anchor = title.toLowerCase().replace ' ', '-'
                 entry = 
