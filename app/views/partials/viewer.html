@@ -1,19 +1,6 @@
 <div id="sidebar">
     <nav id="toc">
-        <ol>
-            <% for entry in @manifest.tableOfContent: %>
-                <li>
-                    <a href="/<%- @page || 'view' %>/<%= @manifest.key %>/page-<%= entry.index %>"><%= entry.title %></a>
-                    <% if entry.childs: %>
-                        <ol>
-                            <% for child in entry.childs: %>
-                                <li><a href="/<%- @page || 'view' %>/<%= @manifest.key %>/page-<%= child.index %>#<%= child.anchor %>"><%= child.title %></a></li>
-                            <% end %>
-                        </ol>
-                    <% end %>
-                </li>
-            <% end %>
-        </ol>
+        <%- @partial 'sidebar', locals: { manifest: @manifest, baseUrl: @baseUrl + '/' + @manifest.key } %>
     </nav>
 </div>
 <article id="content">

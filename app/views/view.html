@@ -11,6 +11,6 @@
                 <a href="/">Switch</a>
             </nav>
         </header>
-        <%- @partial 'viewer', locals: { manifest: @manifest, body: @body } %>
+        <%- @partial 'viewer', locals: { manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
     </body>
 </html>

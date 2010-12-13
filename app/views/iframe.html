@@ -5,6 +5,6 @@
         <%- @partial 'assets', locals: { manifest: @manifest } %>
     </head>
     <body>
-        <%- @partial 'viewer', locals: { manifest: @manifest, body: @body, page: 'iframe' } %>
+        <%- @partial 'viewer', locals: { manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
     </body>
 </html>

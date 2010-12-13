@@ -3,6 +3,7 @@ express = require 'express'
 less = require 'less'
 eco = require 'eco'
 stores = require './app/stores'
+utils = require './app/utils'
 
 app = express.createServer()
 
@@ -34,18 +35,9 @@ app.configure 'production', ->
 #-----------------------------------------------------------------
 # CORE
 
-argv = []
-options = 
+[argv, options] = utils.parse_argv
     title: 'Beautiful Docs'
     manifests: []
-
-for arg in process.argv
-    if arg.substr(0, 2) == '--'
-        parts = arg.split '='
-        options[parts[0].substr(2)] = parts[1] || true
-    else
-        argv.push arg
-    
 store = stores.factory options.store || 'memory'
 
 startServer = ->

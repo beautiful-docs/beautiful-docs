@@ -91,7 +91,7 @@ class Manifest extends events.EventEmitter
                 anchor = title.toLowerCase().replace ' ', '-'
                 entry = 
                     index: i
-                    filename: @files[i].filename
+                    filename: @files[i]
                     title: title
                     anchor: anchor
                     childs: []
