@@ -37,7 +37,7 @@ app.configure 'production', ->
 
 [argv, options] = utils.parse_argv
     title: 'Beautiful Docs'
-    manifests: {}
+    manifests: []
     store: 'memory'
 
 store = stores.factory options.store, options

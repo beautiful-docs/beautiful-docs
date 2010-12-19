@@ -19,6 +19,10 @@ exports.actions = (app, store, options) ->
                     options: options
                     
         import: (req, res, uri) ->
+            if options.readonly
+                res.redirect '/'
+                return
+                
             if uri.match /^github:/
                 uri = "https://github.com/" + uri.substr(7) + "/raw/master/docs/manifest.json"
             else if not uri.match /^https?:\/\//
@@ -47,12 +51,14 @@ exports.actions = (app, store, options) ->
                         manifest: manifest
                         body: manifest.pages[page]
                         baseUrl: baseUrl
+                        options: options
                 else
                     res.render template, locals:
                         key: key
                         manifest: manifest
                         body: manifest.home
                         baseUrl: baseUrl
+                        options: options
                     
         iframe: (req, res, key, page) ->
             Controller.view req, res, key, page, 'iframe', '/iframe'

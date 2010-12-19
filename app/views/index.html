@@ -24,7 +24,7 @@
             <% end %>
             <nav id="links">
                 <ul>
-                    <% for info of @options.manifests: %>
+                    <% for info in @options.manifests: %>
                         <li><a href="/view/<%- info[0] %>"><%= info[1] %></a></li>
                     <% end %>
                 </ul>

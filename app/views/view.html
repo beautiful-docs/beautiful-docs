@@ -7,9 +7,11 @@
     <body>
         <header id="header">
             <h1><a href="/view/<%- @key %>"><%= @manifest.title %></a></h1>
+            <% if not @options.readonly or @options.manifests.length > 1: %>
             <nav id="switch">
                 <a href="/">Switch</a>
             </nav>
+            <% end %>
         </header>
         <%- @partial 'viewer', locals: { key: @key, manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
     </body>
