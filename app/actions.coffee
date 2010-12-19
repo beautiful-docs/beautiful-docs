@@ -20,39 +20,39 @@ exports.actions = (app, store, options) ->
                     
         import: (req, res, uri) ->
             if uri.match /^github:/
-                uri = "https://github.com/" + uri.substr(7) + "/docs/manifest.json"
+                uri = "https://github.com/" + uri.substr(7) + "/raw/master/docs/manifest.json"
             else if not uri.match /^https?:\/\//
                 uri = "http://" + uri
             
             console.log "Loading manifest from " + uri
-            store.create uri, (manifest) ->
-                res.redirect '/view/' + manifest.key
+            store.load uri, (manifest, key) ->
+                res.redirect '/view/' + key
         
         view: (req, res, key, page, template, baseUrl) ->
             template = template || 'view'
             baseUrl = baseUrl || '/view'
             if not key
                 if options.manifests.length == 1
-                    manifest = options.manifests[0]
+                    key = options.manifests[0][0]
                 else
                     res.redirect '/'
                     return
-            else
-                manifest = store.get key
+            
+            store.get key, (manifest) ->
                 if not manifest
                     res.redirect '/'
-                    return
-            
-            if page
-                res.render template, locals:
-                    manifest: manifest
-                    body: manifest.pages[page]
-                    baseUrl: baseUrl
-            else
-                res.render template, locals:
-                    manifest: manifest
-                    body: manifest.home
-                    baseUrl: baseUrl
+                else if page
+                    res.render template, locals:
+                        key: key
+                        manifest: manifest
+                        body: manifest.pages[page]
+                        baseUrl: baseUrl
+                else
+                    res.render template, locals:
+                        key: key
+                        manifest: manifest
+                        body: manifest.home
+                        baseUrl: baseUrl
                     
         iframe: (req, res, key, page) ->
             Controller.view req, res, key, page, 'iframe', '/iframe'

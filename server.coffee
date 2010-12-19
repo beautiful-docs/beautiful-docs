@@ -37,8 +37,10 @@ app.configure 'production', ->
 
 [argv, options] = utils.parse_argv
     title: 'Beautiful Docs'
-    manifests: []
-store = stores.factory options.store || 'memory'
+    manifests: {}
+    store: 'memory'
+
+store = stores.factory options.store, options
 
 startServer = ->
     require('./app/actions').actions app, store, options
@@ -50,8 +52,8 @@ if argv.length > 0
     filesToLoad = argv.length
     for file in argv
         console.log 'Loading manifest from ' + file
-        store.create file, (manifest) -> 
-            options.manifests.push manifest
+        store.load file, (manifest, key) -> 
+            options.manifests.push [key, manifest.title]
             if --filesToLoad == 0 then startServer()
 else
     startServer()

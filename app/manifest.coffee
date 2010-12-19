@@ -4,6 +4,7 @@ fs = require 'fs'
 path = require 'path'
 url = require 'url'
 http = require 'http'
+crypto = require 'crypto'
 md = require('node-markdown').Markdown
 
 class Manifest extends events.EventEmitter
@@ -12,7 +13,6 @@ class Manifest extends events.EventEmitter
         @reset()
         
     reset: ->
-        @key = ''
         @title = 'Documentation'
         @home = ''
         @pages = []
@@ -21,7 +21,13 @@ class Manifest extends events.EventEmitter
         @css = false
         @loaded = false
         
-    load: (filename) ->
+    reload: (callback) ->
+        @load @filename, callback
+        
+    load: (filename, callback) ->
+        if typeof(filename) == 'function'
+            callback = filename
+            filename = false
         @reset()
         @filename = filename || @filename
         @readUri @filename, (data) =>
@@ -45,6 +51,7 @@ class Manifest extends events.EventEmitter
                     if --loaded_files == 0
                         @buildTableOfCOntent()
                         @loaded = true
+                        callback() if callback
                         @emit 'loaded'
                         
     readUri: (uri, callback) ->
@@ -53,7 +60,13 @@ class Manifest extends events.EventEmitter
             port = urlInfo.port || if urlInfo.protocol == 'http:' then 80 else 443
             reqPath = urlInfo.pathname
             reqPath += urlInfo.search if urlInfo.search
-            client = http.createClient port, urlInfo.hostname
+            
+            if urlInfo.protocol == 'https:'
+                creds = crypto.createCredentials({});
+                client = http.createClient port, urlInfo.hostname, true, creds
+            else
+                client = http.createClient port, urlInfo.hostname
+                
             request = client.request 'GET', reqPath, host: urlInfo.hostname
             request.on 'response', (response) ->
                 data = ''
@@ -104,11 +117,26 @@ class Manifest extends events.EventEmitter
                 currentLevel = level
                 
     serialize: ->
-    	JSON.stringify
-    		title: @title
-    		toc: @tableOfContent
-    		home: @home
-    		html: @html
+        JSON.stringify
+            filename: @filename
+            title: @title
+            home: @home
+            pages: @pages
+            files: @files
+            tableOfContent: @tableOfContent
+            css: @css
         
+Manifest.unserialize = (str, reloadIfExpiredAfter) ->
+    data = JSON.parse(str)
+    manifest = new Manifest(data.filename)
+    manifest.title = data.title
+    manifest.home = data.home
+    manifest.pages = data.pages
+    manifest.files = data.files
+    manifest.tableOfContent = data.tableOfContent
+    manifest.css = data.css
+    manifest.loaded = true
+    return manifest
             
 exports.Manifest = Manifest
+
