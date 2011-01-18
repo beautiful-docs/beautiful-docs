@@ -40,19 +40,21 @@ class Manifest extends events.EventEmitter
             files.unshift manifest.home
             loaded_files = files.length
                 
-            for i in [0...files.length]
-                @readUri @makeUriAbsolute(files[i], @filename), (data) =>
-                    if i == 0
-                        @home = md(data)
-                    else
-                        @files[i] = files[i]
-                        @pages[i] = md(data)
-                        
-                    if --loaded_files == 0
-                        @buildTableOfCOntent()
-                        @loaded = true
-                        callback() if callback
-                        @emit 'loaded'
+            for j in [0...files.length]
+                do =>
+                    i = j
+                    @readUri @makeUriAbsolute(files[i], @filename), (data) =>
+                        if i == 0
+                            @home = md(data)
+                        else
+                            @files[i] = files[i]
+                            @pages[i] = md(data)
+                            
+                        if --loaded_files == 0
+                            @buildTableOfCOntent()
+                            @loaded = true
+                            callback() if callback
+                            @emit 'loaded'
                         
     readUri: (uri, callback) ->
         if uri.match /^https?:\/\//
@@ -93,7 +95,7 @@ class Manifest extends events.EventEmitter
             
     buildTableOfCOntent: ->
         @tableOfContent = []
-        for i of @files
+        for i in [1...@files.length]
             hTags = @pages[i].match /<h([1-6])>.+<\/h\1>/gi
             currentLevel = 1
             scope = @tableOfContent
