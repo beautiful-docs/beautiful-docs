@@ -24,6 +24,10 @@ for file in argv
         console.log 'Writing page ' + sidebarFilename
         fs.writeFileSync sidebarFilename, eco.render(sidebarTemplate, { manifest: manifest, baseUrl: options.baseUrl })
         
+        homeFilename = path.join options.out, 'index.html'
+        console.log 'Writing page ' + homeFilename
+        fs.writeFileSync homeFilename, eco.render(manifest.home)
+        
         for entry in manifest.tableOfContent
             filename = path.join options.out, 'page-' + entry.index + '.html'
             console.log 'Writing page ' + filename
