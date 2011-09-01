@@ -1,5 +1,6 @@
 {
     "title": "Beautiful docs",
+    "cname": "help.beautiful-docs.com",
     "home": "docs.md",
 	"files": [
 		"docs.md"

@@ -1,1 +1,11 @@
-<%- @partial 'viewer', locals: { key: @key, manifest: @manifest, body: @body, baseUrl: @baseUrl, queryString: '?baseUrl=' + @baseUrl } %>
+<div id="sidebar">
+    <nav id="toc">
+        <%- @partial '_sidebar', { manifest: @manifest, baseUrl: @baseUrl } %>
+    </nav>
+</div>
+<article id="content">
+    <%- @body %>
+</article>
+<footer id="footer">
+    Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a>
+</footer>

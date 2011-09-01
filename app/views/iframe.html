@@ -2,9 +2,9 @@
 <html>
     <head>
         <title><%= @manifest.title %></title>
-        <%- @partial 'assets', locals: { manifest: @manifest } %>
+        <%- @partial '_assets', { manifest: @manifest } %>
     </head>
     <body>
-        <%- @partial 'viewer', locals: { key: @key, manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
+        <%- @partial 'content', { manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
     </body>
 </html>

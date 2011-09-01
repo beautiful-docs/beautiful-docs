@@ -14,24 +14,24 @@
         </header>
         <div id="main">
             <% if not @options.readonly: %>
-            <form id="import" method="get" action="/import">
-                <input type="text" name="uri" value="github:maximebf/beautiful-docs" class="default">
-                <input type="submit" value="Read">
-                <span class="notice">
-                    Enter a github repo or an url pointing to a manifest file as described <a href="/import?uri=github:maximebf/beautiful-docs">here</a>
-                </span>
-            </form>
+                <form id="import" method="get" action="/import">
+                    <input type="text" name="uri" value="github:maximebf/beautiful-docs" class="default">
+                    <input type="submit" value="Read">
+                    <span class="notice">
+                        Enter a github repo or an url pointing to a manifest file as described <a href="/import?uri=github:maximebf/beautiful-docs">here</a>
+                    </span>
+                </form>
             <% end %>
             <nav id="links">
                 <ul>
-                    <% for info in @options.manifests: %>
-                        <li><a href="/view/<%- info[0] %>"><%= info[1] %></a></li>
+                    <% for manifest in @manifests: %>
+                        <li><a href="/<%- manifest.slug %>"><%= manifest.title %></a></li>
                     <% end %>
                 </ul>
             </nav>
         </div>
         <footer id="footer">
-            Created by <a href="http://maximebf.com">@maximebf</a> - 
+            Created by <a href="http://maximebf.com">maximebf</a> - 
             <a href="http://github.com/maximebf/beautiful-docs">github.com/maximebf/beautiful-docs</a>
         </footer>
     </body>

@@ -1,70 +1,60 @@
 
 exports.actions = (app, store, options) ->
 
-    app.get '/', (req, res) -> Controller.index req, res
-    app.get '/import', (req, res) -> Controller.import req, res, req.param('uri')
-    app.get '/view/:key?', (req, res) -> Controller.view req, res, req.param('key')
-    app.get '/view/:key/page-:page', (req, res) -> Controller.view req, res, req.param('key'), req.param('page')
-    app.get '/iframe/:key?', (req, res) -> Controller.iframe req, res, req.param('key')
-    app.get '/iframe/:key/page-:page', (req, res) -> Controller.iframe req, res, req.param('key'), req.param('page')
-    app.get '/content/:key?', (req, res) -> Controller.content req, res, req.param('key')
-    app.get '/content/:key/page-:page', (req, res) -> Controller.content req, res, req.param('key'), req.param('page')
+    middleware = (req, res, next) ->
+        res.local 'options', options
+        next()
+                    
+    app.error (err, req, res, next) ->
+        if err.message == 404
+            res.render 'error_404'
+        else
+            next err
 
-    Controller = 
-        index: (req, res) ->
-            if options.readonly and options.manifests.length == 1
-                res.redirect '/view'
-            else
-                res.render 'index', locals:
-                    options: options
-                    
-        import: (req, res, uri) ->
-            if options.readonly
-                res.redirect '/'
-                return
-                
-            if uri.match /^github:/
-                uri = "https://github.com/" + uri.substr(7) + "/raw/master/docs/manifest.json"
-            else if not uri.match /^https?:\/\//
-                uri = "http://" + uri
-            
-            console.log "Loading manifest from " + uri
-            store.load uri, (manifest, key) ->
-                res.redirect '/view/' + key
-        
-        view: (req, res, key, page, template, baseUrl) ->
-            template = template || 'view'
-            baseUrl = baseUrl || '/view'
-            if not key
-                if options.manifests.length == 1
-                    key = options.manifests[0][0]
-                else
-                    res.redirect '/'
-                    return
-            
-            store.get key, (manifest) ->
-                if not manifest
-                    res.redirect '/'
-                else if page
-                    res.render template, locals:
-                        key: key
-                        manifest: manifest
-                        body: manifest.pages[page]
-                        baseUrl: baseUrl
-                        options: options
-                else
-                    res.render template, locals:
-                        key: key
-                        manifest: manifest
-                        body: manifest.home
-                        baseUrl: baseUrl
-                        options: options
-                    
-        iframe: (req, res, key, page) ->
-            Controller.view req, res, key, page, 'iframe', '/iframe'
-            
-        content: (req, res, key, page) ->
-            baseUrl = req.param('baseUrl') || '/content'
-            Controller.view req, res, key, page, 'content', baseUrl
-        
+    app.get '/', middleware, (req, res) ->
+        store.findAll (manifests) ->
+            res.render 'index', manifests: manifests
     
+    app.get '/import', middleware, (req, res) ->
+        if options.readonly
+            res.redirect '/'
+            return
+            
+        uri = req.param 'uri'
+        if uri.match /^github:/
+            uri = "https://github.com/" + uri.substr(7) + "/raw/master/docs/manifest.json"
+        else if not uri.match /^https?:\/\//
+            uri = "http://" + uri
+        
+        store.load uri, (manifest) ->
+            res.redirect '/' + manifest.slug
+    
+    app.get /^\/([a-zA-Z0-9_\-]+)\/(.+\.(png|jpg|jpeg|gif))$/i, middleware, (req, res, next) ->
+        projectSlug = req.params[0]
+        filename = req.params[1]
+        store.find projectSlug, (manifest) ->
+            next(new Error(404)) if not manifest or not manifest.isLocal
+            pathname = manifest.makeUriAbsolute filename
+            console.log pathname
+            res.download pathname
+    
+    app.get /^\/([a-zA-Z0-9_\-]+)(\/(.*)|)$/, middleware, (req, res, next) ->
+        projectSlug = req.params[0]
+        pageSlug = req.params[2]
+
+        res.local 'baseUrl', req.param('baseurl', '/view')
+        template = req.param('layout', 'view')
+        if not template in ['view', 'content', 'iframe']
+            template = 'view'
+
+        store.find projectSlug, (manifest) ->
+            next(new Error(404)) if not manifest
+            res.local 'manifest', manifest
+            if pageSlug
+                if not manifest.pages[pageSlug]
+                    next new Error(404)
+                else
+                    res.render template, body: manifest.pages[pageSlug]
+            else
+                res.render template, body: manifest.home
+
