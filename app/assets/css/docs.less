@@ -128,8 +128,7 @@ body {
     
     p {
         margin: 15px 0;
-    }
-    
+    }    
     a {
         color: @content_link_color;
         text-decoration: none;
@@ -177,6 +176,30 @@ body {
         border: 2px solid #e5cc24;
         padding: 5px;
         margin: 20px 0;
+    }
+
+    table {
+        width: 100%;
+        margin: 20px auto;
+
+        th {
+            color: #555;
+            background: #efefef;
+            padding: 4px;
+            border-bottom: 1px solid #bbb;
+            border-left: 1px solid #bbb;
+        }
+        th:first-child {
+            border-left: 0;
+        }
+        td {
+            padding: 4px;
+            border-bottom: 1px solid #ccc;
+            border-left: 1px solid #ccc;
+        }
+        td:first-child {
+            border-left: 0;
+        }
     }
 }
 
