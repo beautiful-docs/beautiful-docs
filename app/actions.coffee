@@ -38,6 +38,12 @@ exports.actions = (app, store, options) ->
             console.log pathname
             res.download pathname
     
+    app.get /^\/([a-zA-Z0-9_\-]+)\/_all$/, middleware, (req, res, next) ->
+        projectSlug = req.params[0]
+        store.find projectSlug, (manifest) ->
+            next(new Error(404)) if not manifest
+            res.render 'all', manifest: manifest
+    
     app.get /^\/([a-zA-Z0-9_\-]+)(\/(.*)|)$/, middleware, (req, res, next) ->
         projectSlug = req.params[0]
         pageSlug = req.params[2]
