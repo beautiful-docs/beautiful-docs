@@ -25,4 +25,7 @@ class ManifestStorage
         m = (v for k, v of @manifests)
         callback m
 
+    count: (callback) ->
+        callback @manifests.length
+
 module.exports = ManifestStorage

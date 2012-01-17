@@ -69,7 +69,7 @@ exports.actions = (app, store, options) ->
                 if not manifest.pages[pageSlug]
                     next new Error(404)
                 else
-                    res.render template, body: manifest.pages[pageSlug]
+                    res.render template, {body: manifest.pages[pageSlug]}
             else
-                res.render template, body: manifest.home
+                res.render template, {body: manifest.home}
 

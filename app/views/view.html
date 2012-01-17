@@ -7,11 +7,9 @@
     <body>
         <header id="header">
             <h1><a href="/<%- @manifest.slug %>"><%= @manifest.title %></a></h1>
-            <% if not @options.readonly: %>
             <nav id="switch">
                 <a href="/">Switch</a>
             </nav>
-            <% end %>
         </header>
         <%- @partial 'content', { manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
     </body>
