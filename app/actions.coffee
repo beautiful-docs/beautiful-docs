@@ -41,7 +41,9 @@ exports.actions = (app, store, options) ->
         projectSlug = req.params[0]
         filename = req.params[1]
         store.find projectSlug, (manifest) ->
-            next(new Error(404)) if not manifest or not manifest.isLocal
+            if not manifest or not manifest.isLocal
+                next(new Error(404))
+                return
             pathname = manifest.makeUriAbsolute filename
             fs.realpath pathname, (err, resolvedPath) ->
                 console.log resolvedPath
@@ -50,8 +52,10 @@ exports.actions = (app, store, options) ->
     app.get /^\/([a-zA-Z0-9_\-]+)\/_all$/, middleware, (req, res, next) ->
         projectSlug = req.params[0]
         store.find projectSlug, (manifest) ->
-            next(new Error(404)) if not manifest
-            res.render 'all', manifest: manifest
+            if not manifest
+                next(new Error(404))
+            else
+                res.render 'all', manifest: manifest
     
     app.get /^\/([a-zA-Z0-9_\-]+)(\/(.*)|)$/, middleware, (req, res, next) ->
         projectSlug = req.params[0]
