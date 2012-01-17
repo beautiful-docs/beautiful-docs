@@ -6,7 +6,7 @@ Documentation manuals are described in a manifest file using JSON.
 
 Features:
 
- - Markdown syntax
+ - [Markdown syntax](http://daringfireball.net/projects/markdown/syntax)
  - Uses files (store them anywhere, in git for example)
  - Automatically generate the table of content
  - Clean and simple to use interface
