@@ -8,11 +8,9 @@
     <body>
         <header id="header">
             <h1><a href="/<%- @manifest.slug %>"><%= @manifest.title %></a></h1>
-            <% if not @options.readonly or @options.manifests.length > 1: %>
-                <nav id="switch">
-                    <a href="/">Switch</a>
-                </nav>
-            <% end %>
+            <nav id="switch">
+                <a href="/">Switch</a>
+            </nav>
         </header>
         <div id="content">
             <% for pageSlug, pageBody of @manifest.pages: %>
