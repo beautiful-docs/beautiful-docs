@@ -45,9 +45,7 @@ exports.actions = (app, store, options) ->
                 next(new Error(404))
                 return
             pathname = manifest.makeUriAbsolute filename
-            fs.realpath pathname, (err, resolvedPath) ->
-                console.log resolvedPath
-                res.download resolvedPath
+            fs.realpath pathname, (err, resolvedPath) -> res.download resolvedPath
     
     app.get /^\/([a-zA-Z0-9_\-]+)\/_all$/, middleware, (req, res, next) ->
         projectSlug = req.params[0]
@@ -59,6 +57,9 @@ exports.actions = (app, store, options) ->
     
     app.get /^\/([a-zA-Z0-9_\-]+)(\/(.*)|)$/, middleware, (req, res, next) ->
         projectSlug = req.params[0]
+        if req.params[1] == ''
+            res.redirect('/' + projectSlug + '/')
+            return
         pageSlug = req.params[2]
 
         res.local 'baseUrl', req.param('baseurl', '/view')
