@@ -22,13 +22,16 @@
                     </span>
                 </form>
             <% end %>
-            <nav id="links">
-                <ul>
-                    <% for manifest in @manifests: %>
-                        <li><a href="/<%- manifest.slug %>"><%= manifest.title %></a></li>
-                    <% end %>
-                </ul>
-            </nav>
+            <% for categoryName, manifests of @categories: %>
+                <section class="category">
+                    <h2><%= categoryName %></h2>
+                    <ul>
+                        <% for manifest in manifests: %>
+                            <li><a href="/<%- manifest.slug %>"><%= manifest.title %></a></li>
+                        <% end %>
+                    </ul>
+                </section>
+            <% end %>
         </div>
         <footer id="footer">
             Created by <a href="http://maximebf.com">maximebf</a> - 

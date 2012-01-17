@@ -1,3 +1,4 @@
+fs = require 'fs'
 
 exports.actions = (app, store, options) ->
 
@@ -13,7 +14,14 @@ exports.actions = (app, store, options) ->
 
     app.get '/', middleware, (req, res) ->
         store.findAll (manifests) ->
-            res.render 'index', manifests: manifests
+            categories = {}
+            for m in manifests
+                name = m.category || 'All Projects'
+                if not categories[name]
+                    categories[name] = []
+                categories[name].push m
+            
+            res.render 'index', categories: categories
     
     app.get '/import', middleware, (req, res) ->
         if options.readonly
@@ -29,14 +37,15 @@ exports.actions = (app, store, options) ->
         store.load uri, (manifest) ->
             res.redirect '/' + manifest.slug
     
-    app.get /^\/([a-zA-Z0-9_\-]+)\/(.+\.(png|jpg|jpeg|gif))$/i, middleware, (req, res, next) ->
+    app.get /^\/([a-zA-Z0-9_\-]+)\/(.+\.(bmp|png|jpg|jpeg|gif|zip|tar|tar.bz2|tar.gz|exe|msi))$/i, middleware, (req, res, next) ->
         projectSlug = req.params[0]
         filename = req.params[1]
         store.find projectSlug, (manifest) ->
             next(new Error(404)) if not manifest or not manifest.isLocal
             pathname = manifest.makeUriAbsolute filename
-            console.log pathname
-            res.download pathname
+            fs.realpath pathname, (err, resolvedPath) ->
+                console.log resolvedPath
+                res.download resolvedPath
     
     app.get /^\/([a-zA-Z0-9_\-]+)\/_all$/, middleware, (req, res, next) ->
         projectSlug = req.params[0]

@@ -3,6 +3,7 @@ express = require 'express'
 less = require 'less'
 eco = require 'eco'
 fs = require 'fs'
+path = require 'path'
 ManifestStorage = require './app/storage'
 
 app = express.createServer()
@@ -42,6 +43,7 @@ options =
     title: 'Beautiful Docs'
     readonly: false
     watch: false
+    many: false
 
 for arg in process.argv.slice(2)
     if arg.substr(0, 2) == '--'
@@ -52,6 +54,24 @@ for arg in process.argv.slice(2)
 
 store = new ManifestStorage(options)
 
+listManifestsFromDirs = (dirs) ->
+    filesToLoad = []
+    for dir in dirs
+        for file in fs.readdirSync(dir)
+            pathname = path.join(dir, file, 'manifest.json')
+            if path.existsSync(pathname)
+                filesToLoad.push pathname
+    return filesToLoad
+
+loadFiles = (filesToLoad, watch, callback) ->
+    nbFilesToLoad = filesToLoad.length
+    for file in filesToLoad
+        store.load file, (manifest) -> 
+            if watch
+                console.log "Watching file " + manifest.filename + " for changes"
+                manifest.watch()
+            if --nbFilesToLoad == 0 then callback()
+
 startServer = ->
     require('./app/actions').actions app, store, options
     port = options.port || 8080
@@ -59,13 +79,11 @@ startServer = ->
     app.listen port
 
 if argv.length > 0
-    filesToLoad = argv.length
-    for file in argv
-        store.load file, (manifest) -> 
-            if options.watch
-                console.log "Watching file #{file} for changes"
-                manifest.watch()
-            if --filesToLoad == 0 then startServer()
+    filesToLoad = argv
+    if options.many
+        filesToLoad = listManifestsFromDirs argv
+    loadFiles filesToLoad, options.watch, startServer
+
 else
     startServer()
 

@@ -24,6 +24,7 @@ class Manifest extends events.EventEmitter
     reset: ->
         @title = 'Documentation'
         @slug = 'documentation'
+        @category = null
         @home = ''
         @homeFile = false
         @files = []
@@ -48,6 +49,7 @@ class Manifest extends events.EventEmitter
             manifest = JSON.parse(data)
             @title = manifest.title || ''
             @slug = generateSlug @title
+            @category = manifest.category || null
             @css = manifest.css || false
             
             files = manifest.files || []
