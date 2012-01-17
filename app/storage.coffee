@@ -1,11 +1,14 @@
 Manifest = require('./manifest').Manifest
 crypto = require 'crypto'
 
+#
+# Stores manifests in memory
+#
 class ManifestStorage
     constructor: (options) ->
         @options = options
         @manifests = {}
-        
+    
     load: (uri, callback) ->
         console.log "Loading manifest from " + uri
         manifest = new Manifest(uri)

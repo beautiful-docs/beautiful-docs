@@ -1,12 +1,5 @@
 
-all: public modules
-
-modules:
-	npm install express
-	npm install coffee-script
-	npm install eco
-	npm install less
-	npm install node-markdown
+all: public
     
 public:
 	mkdir -p public/css

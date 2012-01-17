@@ -1,3 +1,18 @@
+###
+BEAUTIFUL DOCS
+Copyright (C) 2012 Maxime Bouroumeau-Fuseau
+
+Main server script.
+Usage: coffee server.coffee [path/to/manifest.json, [path/to/other/manifest.json, ...]]
+
+Available options:
+
+    --readonly  Disables the import feature from the web interface
+    --many      The server.coffee args should be directories containing subfolders with manifest.json files
+    --watch     Watch files for modifications and automatically reload them
+    --title     Title in the web interface
+
+###
 
 express = require 'express'
 less = require 'less'
@@ -8,7 +23,7 @@ ManifestStorage = require './app/storage'
 
 app = express.createServer()
 
-#-----------------------------------------------------------------
+#------------------------------------------------------------------------------
 # CONFIGURATION
 
 app.configure ->
@@ -35,7 +50,7 @@ app.configure 'development', ->
 app.configure 'production', ->
     app.use express.errorHandler()
 
-#-----------------------------------------------------------------
+#------------------------------------------------------------------------------
 # CORE
 
 argv = []
@@ -54,6 +69,30 @@ for arg in process.argv.slice(2)
 
 store = new ManifestStorage(options)
 
+#
+# Loads manifest files specified in filesToLoad
+#
+# @param array filesToLoad
+# @param bool watch
+# @param function callback
+#
+loadFiles = (filesToLoad, watch=true, callback=null) ->
+    nbFilesToLoad = filesToLoad.length
+    for file in filesToLoad
+        if path.existsSync(file)
+            store.load fs.realpathSync(file), (manifest) -> 
+                if watch
+                    console.log "Watching file '" + manifest.filename + "' for changes"
+                    manifest.watch()
+                if --nbFilesToLoad == 0 and callback then callback()
+
+#
+# Returns a list of manifests from a list of directories
+#
+# Manifests will be searched in subfolders of the specified directories
+#
+# @param array dirs
+#
 listManifestsFromDirs = (dirs) ->
     filesToLoad = []
     for dir in dirs
@@ -63,25 +102,39 @@ listManifestsFromDirs = (dirs) ->
                 filesToLoad.push pathname
     return filesToLoad
 
-loadFiles = (filesToLoad, watch, callback) ->
-    nbFilesToLoad = filesToLoad.length
-    for file in filesToLoad
-        store.load file, (manifest) -> 
-            if watch
-                console.log "Watching file " + manifest.filename + " for changes"
-                manifest.watch()
-            if --nbFilesToLoad == 0 then callback()
+#
+# Watch a list of directories for new manifests ala listManifestsFromDirs
+#
+# @param array dirs
+#
+watchDirsForNewManifests = (dirs) ->
+    for dir in dirs
+        fs.watch dir, (event, filename) ->
+            if event == 'rename'
+                pathname = path.join(dir, filename, 'manifest.json')
+                if path.existsSync(pathname)
+                    console.log "New manifest detected in '" + pathname + "'"
+                    loadFiles [pathname]
 
+#
+# Starts the http server
+#
 startServer = ->
     require('./app/actions').actions app, store, options
     port = options.port || 8080
     console.log 'Starting server on port ' + port
     app.listen port
 
+
+#------------------------------------------------------------------------------
+# START
+
 if argv.length > 0
     filesToLoad = argv
     if options.many
         filesToLoad = listManifestsFromDirs argv
+        watchDirsForNewManifests if options.watch
+
     loadFiles filesToLoad, options.watch, startServer
 
 else

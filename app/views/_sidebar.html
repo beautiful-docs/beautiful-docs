@@ -1,11 +1,11 @@
 <ol>
     <% for entry in @manifest.tableOfContent: %>
         <li>
-            <a href="/<%- @manifest.slug + '/' + entry.slug %>"><%= entry.title %></a>
+            <a href="<%= @baseUrl %>/<%- entry.slug %>"><%= entry.title %></a>
             <% if entry.childs: %>
                 <ol>
                     <% for child in entry.childs: %>
-                        <li><a href="/<%- @manifest.slug + '/' + child.slug %>#<%= child.anchor %>"><%= child.title %></a></li>
+                        <li><a href="<%= @baseUrl %>/<%- child.slug %>#<%= child.anchor %>"><%= child.title %></a></li>
                     <% end %>
                 </ol>
             <% end %>

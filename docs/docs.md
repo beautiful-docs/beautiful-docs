@@ -1,4 +1,0 @@
-
-# Beautiful docs
-
-hello world

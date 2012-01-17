@@ -1,4 +1,3 @@
-
 events = require 'events'
 fs = require 'fs'
 path = require 'path'
@@ -8,6 +7,11 @@ https = require 'https'
 crypto = require 'crypto'
 md = require('node-markdown').Markdown
 
+#
+# Transforms a string to an uri-compatible one
+#
+# @param string str
+#
 generateSlug = (str) ->
     str = str.toLowerCase()
     str = str.replace /^\s+|\s+$/g, ""
@@ -16,6 +20,12 @@ generateSlug = (str) ->
     str = str.replace /[-]+/g, "-"
     str = str.replace /^-+|-+$/g, ""
 
+#
+# Represents a manifest file
+#
+# Stores all information from the manifest as well
+# as rendered pages and the computed table of content
+#
 class Manifest extends events.EventEmitter
     constructor: (filename) ->
         @filename = filename
@@ -33,18 +43,22 @@ class Manifest extends events.EventEmitter
         @tableOfContent = []
         @css = false
         @loaded = false
-        @isLocal = null
         
     reload: (callback) ->
         @load @filename, callback
         
+    #
+    # Loads a manifest file
+    #
+    # @param string filename
+    # @param function callback
+    #
     load: (filename, callback) ->
         if typeof(filename) == 'function'
             callback = filename
             filename = false
         @reset()
         @filename = filename || @filename
-        @isLocal = not @filename.match /^https?:\/\//
         @readUri @filename, (data) =>
             manifest = JSON.parse(data)
             @title = manifest.title || ''
@@ -72,23 +86,28 @@ class Manifest extends events.EventEmitter
                             @loaded = true
                             callback() if callback
                             @emit 'loaded'
-                        
+    
+    #
+    # Reads a file from the given uri and calls callback with the data
+    #
+    # Uri can be an url starting with http:// or https://, or a local filename
+    #
+    # @param string uri
+    # @param function callback
+    #
     readUri: (uri, callback) ->
-        if uri.match /^https?:\/\//
+        if not @isLocalFile(uri)
             urlInfo = url.parse uri
-            reqPath = urlInfo.pathname
-            reqPath += urlInfo.search if urlInfo.search
             
             options = 
                 host: urlInfo.hostname
                 port: urlInfo.port || if urlInfo.protocol == 'http:' then 80 else 443
-                path: reqPath
+                path: urlInfo.path
                 method: 'GET'
                  
             responseHandler = (res) ->
-                data = ''
-                res.on 'data', (chunk) -> data += chunk
-                res.on 'end', -> callback data
+                res.on 'data', (chunk) -> callback chunk.toString()
+                res.on 'error', (err) -> throw err
             
             if urlInfo.protocol == 'https:'
                 request = https.request options, responseHandler
@@ -100,19 +119,39 @@ class Manifest extends events.EventEmitter
                 if err then throw err
                 callback data.toString()
                 
+    #
+    # Checks if the uri is a local file or not
+    #
+    # @param string uri
+    # @return bool
+    #
     isLocalFile: (uri) ->
         not uri.match /^https?:\/\//
                 
+    #
+    # Makes the uri absolute
+    #
+    # If uri is a relative uri, it will be resolved relative to the manifests path
+    #
+    # @param string uri
+    # @return string
+    #
     makeUriAbsolute: (uri) ->
         if not @isLocalFile(uri) or uri.substr(0, 1) == '/'
             uri
-        else if @isLocal
+        else if not @isLocalFile(@filename)
             urlInfo = url.parse @filename
             urlInfo.pathname = path.join path.dirname(urlInfo.pathname), uri
             url.format urlInfo
         else
             path.join path.dirname(@filename), uri
             
+    #
+    # Transforms markdown sources to HTML
+    #
+    # @param string source
+    # @return string
+    #
     renderPage: (source) ->
         html = md source
         imgs = html.match /<img[^>]*>/gi
@@ -125,6 +164,11 @@ class Manifest extends events.EventEmitter
                     html = html.replace img, img2
         return html
             
+    #
+    # Buils the table of content from titles in the pages
+    #
+    # Uses <h1> and <h2> tags from the HTML sources
+    #
     buildTableOfContent: ->
         @tableOfContent = []
         scope = @tableOfContent
@@ -157,18 +201,23 @@ class Manifest extends events.EventEmitter
                 parentScopes.push scope
                 scope = entry.childs
                 currentLevel = level
-                
+    
+    #
+    # Watches the manifest and all the pages files for changes
+    #
     watch: ->
         return if @filename.match /^https?:\/\//
-        @watchFile @filename
-        if @homeFile then @watchFile @homeFile
+        watcher = (curr, prev) => if curr.mtime > prev.mtime then @reload()
+        fs.watchFile @filename, watcher
+        if @homeFile then fs.watchFile @homeFile, watcher
         for i, f of @files
-            @watchFile @makeUriAbsolute(f)
-                
-    watchFile: (filename) ->
-        fs.watchFile filename, (curr, prev) =>
-            if curr.mtime > prev.mtime then @reload()
-                
+            fs.watchFile @makeUriAbsolute(f), watcher
+            
+    #
+    # Serializes the manifest to a JSON-encoded string
+    #
+    # @return string
+    #    
     serialize: ->
         JSON.stringify
             filename: @filename
@@ -181,7 +230,12 @@ class Manifest extends events.EventEmitter
             tableOfContent: @tableOfContent
             css: @css
         
-Manifest.unserialize = (str, reloadIfExpiredAfter) ->
+#
+# Builds a manifest object from a JSON-encoded string
+#
+# @param string str
+#
+Manifest.unserialize = (str) ->
     data = JSON.parse(str)
     manifest = new Manifest(data.filename)
     manifest.title = data.title
@@ -196,4 +250,3 @@ Manifest.unserialize = (str, reloadIfExpiredAfter) ->
     return manifest
             
 exports.Manifest = Manifest
-

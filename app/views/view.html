@@ -5,12 +5,7 @@
         <%- @partial '_assets', { manifest: @manifest } %>
     </head>
     <body>
-        <header id="header">
-            <h1><a href="/<%- @manifest.slug %>/"><%= @manifest.title %></a></h1>
-            <nav id="switch">
-                <a href="/">Switch</a>
-            </nav>
-        </header>
+        <%- @partial '_header', { manifest: @manifest, baseUrl: @baseUrl } %>
         <%- @partial 'content', { manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
     </body>
 </html>
