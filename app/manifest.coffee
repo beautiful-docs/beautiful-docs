@@ -50,6 +50,7 @@ class Manifest extends events.EventEmitter
         @pages = {}
         @tableOfContent = []
         @css = false
+        @code_highlight_theme = 'sunburst'
         @loaded = false
         
     reload: (callback) ->
@@ -73,6 +74,7 @@ class Manifest extends events.EventEmitter
             @slug = generateSlug @title
             @category = manifest.category || null
             @css = manifest.css || false
+            @code_highlight_theme = manifest.code_highlight_theme || 'sunburst'
             
             files = manifest.files || []
             files.unshift manifest.home

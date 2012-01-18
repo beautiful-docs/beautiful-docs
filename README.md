@@ -6,7 +6,7 @@ Documentation manuals are described in a manifest file using JSON.
 
 Features:
 
- - [Markdown syntax](http://daringfireball.net/projects/markdown/syntax)
+ - [Markdown syntax](http://daringfireball.net/projects/markdown/syntax) (with support for [Github Flavored Markdown](http://github.github.com/github-flavored-markdown/))
  - Uses files (store them anywhere, in git for example)
  - Automatically generate the table of content
  - Clean and simple to use interface
@@ -26,6 +26,7 @@ A manifest file contains a JSON object with the following properties:
  - *title*: Title of the manual (optional, default "Documentation")
  - *category*: Category of the manual (used on the homepage) (optional, default none)
  - *css*: An absolute URL to a CSS stylesheet that will be included in the page
+ - *code\_highlight\_theme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
 
 Files can be absolute URIs or relative to the manifest file.  
 Example:
