@@ -1,10 +1,42 @@
 fs = require 'fs'
 
-exports.actions = (app, store, options) ->
+module.exports = (app, session) ->
 
-    middleware = (req, res, next) ->
-        res.local 'options', options
+    assets_extensions = 'bmp|png|jpg|jpeg|gif|zip|tar|tar.bz2|tar.gz|exe|msi'
+    routes = 
+        home: '/'
+        import: '/import',
+        assets: new RegExp('^\\/([a-zA-Z0-9_\\-]+)\\/(.+\\.(' + assets_extensions + '))$', 'i')
+        all: /^\/([a-zA-Z0-9_\-]+)\/_all$/
+        search: /^\/([a-zA-Z0-9_\-]+)\/_search$/
+        page: /^\/([a-zA-Z0-9_\-]+)(\/(.*)|)$/
+
+    #
+    # Adds the "options" variable to all views
+    #
+    add_global_view_vars = (req, res, next) ->
+        res.local 'options', session.options
         next()
+
+    #
+    # Finds a manifest using the first req.params
+    # The manifest will be available through req.manifest and in views
+    #
+    # The base url can also be modified using the "baseurl" parameter
+    #
+    extract_manifest_from_params = (req, res, next) ->
+        session.store.find req.params[0], (manifest) ->
+            if not manifest
+                next new Error(404)
+            else
+                req.manifest = manifest
+                res.local 'manifest', manifest
+                res.local 'baseUrl', req.param('baseurl', '/' + req.manifest.slug)
+                next()
+
+    # middlewares
+    middleware = add_global_view_vars
+    middleware_with_manifest = [add_global_view_vars, extract_manifest_from_params]
 
     #
     # Error handler
@@ -18,8 +50,8 @@ exports.actions = (app, store, options) ->
     #
     # Homepage
     #
-    app.get '/', middleware, (req, res) ->
-        store.findAll (manifests) ->
+    app.get routes.home, middleware, (req, res) ->
+        session.store.findAll (manifests) ->
             categories = {}
             for m in manifests
                 name = m.category || 'All Projects'
@@ -32,8 +64,8 @@ exports.actions = (app, store, options) ->
     #
     # Imports a new manifest which uri is specified as the "uri" parameter
     #
-    app.get '/import', middleware, (req, res) ->
-        if options.readonly
+    app.get routes.import, middleware, (req, res) ->
+        if session.options.readonly
             res.redirect '/'
             return
             
@@ -43,33 +75,35 @@ exports.actions = (app, store, options) ->
         else if not uri.match /^https?:\/\//
             uri = "http://" + uri
         
-        store.load uri, (manifest) ->
-            res.redirect '/' + manifest.slug
+        session.store.load uri, (manifest) -> res.redirect '/' + manifest.slug + '/'
     
     #
     # Handles assets relative to the manifest file
     #
-    app.get /^\/([a-zA-Z0-9_\-]+)\/(.+\.(bmp|png|jpg|jpeg|gif|zip|tar|tar.bz2|tar.gz|exe|msi))$/i, middleware, (req, res, next) ->
-        projectSlug = req.params[0]
-        filename = req.params[1]
-        store.find projectSlug, (manifest) ->
-            if not manifest
-                next(new Error(404))
-                return
-            pathname = manifest.makeUriAbsolute filename
-            console.log pathname
-            fs.realpath pathname, (err, resolvedPath) -> res.download resolvedPath
+    app.get routes.assets, middleware_with_manifest, (req, res, next) ->
+        pathname = req.manifest.makeUriAbsolute req.params[1]
+        fs.realpath pathname, (err, resolvedPath) -> 
+            if err
+                next new Error(404)
+            else
+                res.download resolvedPath
     
     #
     # Displays all manifest's pages on a single HTML page
     #
-    app.get /^\/([a-zA-Z0-9_\-]+)\/_all$/, middleware, (req, res, next) ->
-        projectSlug = req.params[0]
-        store.find projectSlug, (manifest) ->
-            if not manifest
-                next(new Error(404))
-            else
-                res.render 'all', manifest: manifest
+    app.get routes.all, middleware_with_manifest, (req, res, next) ->
+        res.render 'all'
+
+    #
+    # Search handler
+    #
+    app.get routes.search, middleware_with_manifest, (req, res, next) ->
+        if not session.search
+            return next(new Error(404))
+        
+        q = req.param('q')
+        session.search.search req.manifest, q, (hits) ->
+            res.render 'view', search: { hits: hits, query: q}
     
     #
     # Displays a single manifest's page
@@ -77,30 +111,19 @@ exports.actions = (app, store, options) ->
     # Alternative views can be selected using the "layout" parameter.
     # Available layouts are "view" (default), "content" and "iframe".
     #
-    # The base url can also be modified using the "baseurl" parameter
-    #
-    app.get /^\/([a-zA-Z0-9_\-]+)(\/(.*)|)$/, middleware, (req, res, next) ->
-        projectSlug = req.params[0]
+    app.get routes.page, middleware_with_manifest, (req, res, next) ->
         if req.params[1] == ''
             # the urls should always look like /projectslug/ instead of /projectslug
             # because of relative assets
-            res.redirect('/' + projectSlug + '/')
-            return
-        pageSlug = req.params[2]
+            return res.redirect('/' + req.manifest.slug + '/')
 
-        res.local 'baseUrl', req.param('baseurl', '/' + projectSlug)
+        pageSlug = req.params[2] || req.manifest.slugs[0]
         template = req.param('layout', 'view')
         if not template in ['view', 'content', 'iframe']
             template = 'view'
 
-        store.find projectSlug, (manifest) ->
-            next(new Error(404)) if not manifest
-            res.local 'manifest', manifest
-            if pageSlug
-                if not manifest.pages[pageSlug]
-                    next new Error(404)
-                else
-                    res.render template, {body: manifest.pages[pageSlug]}
-            else
-                res.render template, {body: manifest.home}
+        if not req.manifest.pages[pageSlug]
+            next new Error(404)
+        else
+            res.render template, {body: req.manifest.pages[pageSlug]}
 

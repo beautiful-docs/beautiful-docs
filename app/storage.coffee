@@ -5,8 +5,7 @@ crypto = require 'crypto'
 # Stores manifests in memory
 #
 class ManifestStorage
-    constructor: (options) ->
-        @options = options
+    constructor: (@options, @search=null) ->
         @manifests = {}
     
     load: (uri, callback) ->
@@ -16,6 +15,8 @@ class ManifestStorage
             if @manifests[manifest.slug]
                 manifest.slug = crypto.createHash('md5').update(uri).digest("hex")
             @manifests[manifest.slug] = manifest
+            if @search
+                @search.index manifest, ->
             callback(manifest) if callback
         
     find: (slug, callback) ->

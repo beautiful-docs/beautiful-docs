@@ -6,6 +6,11 @@
     </head>
     <body>
         <%- @partial '_header', { manifest: @manifest, baseUrl: @baseUrl } %>
-        <%- @partial 'content', { manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
+        <% if @search: %>
+            <% body = @partial('_search', { manifest: @manifest, baseUrl: @baseUrl, search: @search }) %>
+            <%- @partial 'content', { manifest: @manifest, body: body, baseUrl: @baseUrl } %>
+        <% else: %>
+            <%- @partial 'content', { manifest: @manifest, body: @body, baseUrl: @baseUrl } %>
+        <% end %>
     </body>
 </html>

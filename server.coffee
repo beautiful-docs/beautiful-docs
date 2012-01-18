@@ -53,21 +53,31 @@ app.configure 'production', ->
 #------------------------------------------------------------------------------
 # CORE
 
-argv = []
-options =
-    title: 'Beautiful Docs'
-    readonly: false
-    watch: false
-    many: false
+session = 
+    store: null
+    search: null
+    argv: []
+    options: {
+        title: 'Beautiful Docs'
+        readonly: false
+        watch: false
+        many: false
+        search: false
+    }
 
 for arg in process.argv.slice(2)
     if arg.substr(0, 2) == '--'
         parts = arg.split '='
-        options[parts[0].substr(2).replace('-', '_')] = parts[1] || true
+        session.options[parts[0].substr(2).replace('-', '_')] = parts[1] || true
     else
-        argv.push arg
+        session.argv.push arg
 
-store = new ManifestStorage(options)
+if session.options.search
+    Search = require('./app/search').Search
+    host = if typeof(session.options.search) is 'string' then session.options.search else 'localhost'
+    console.log "Activating search server ('#{host}')"
+    session.search = new Search(host)
+session.store = new ManifestStorage(session.options, session.search)
 
 #
 # Loads manifest files specified in filesToLoad
@@ -80,7 +90,7 @@ loadFiles = (filesToLoad, watch=true, callback=null) ->
     nbFilesToLoad = filesToLoad.length
     for file in filesToLoad
         if path.existsSync(file)
-            store.load fs.realpathSync(file), (manifest) -> 
+            session.store.load fs.realpathSync(file), (manifest) -> 
                 if watch
                     console.log "Watching file '" + manifest.filename + "' for changes"
                     manifest.watch()
@@ -120,8 +130,8 @@ watchDirsForNewManifests = (dirs) ->
 # Starts the http server
 #
 startServer = ->
-    require('./app/actions').actions app, store, options
-    port = options.port || 8080
+    require('./app/actions')(app, session)
+    port = session.options.port || 8080
     console.log 'Starting server on port ' + port
     app.listen port
 
@@ -129,13 +139,13 @@ startServer = ->
 #------------------------------------------------------------------------------
 # START
 
-if argv.length > 0
-    filesToLoad = argv
-    if options.many
-        filesToLoad = listManifestsFromDirs argv
-        watchDirsForNewManifests if options.watch
+if session.argv.length > 0
+    filesToLoad = session.argv
+    if session.options.many
+        filesToLoad = listManifestsFromDirs session.argv
+        watchDirsForNewManifests if session.options.watch
 
-    loadFiles filesToLoad, options.watch, startServer
+    loadFiles filesToLoad, session.options.watch, startServer
 
 else
     startServer()

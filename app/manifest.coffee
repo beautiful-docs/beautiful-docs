@@ -43,9 +43,8 @@ class Manifest extends events.EventEmitter
         @title = 'Documentation'
         @slug = 'documentation'
         @category = null
-        @home = ''
-        @homeFile = false
         @files = []
+        @filesData = []
         @slugs = []
         @pages = {}
         @tableOfContent = []
@@ -73,23 +72,25 @@ class Manifest extends events.EventEmitter
             @title = manifest.title || ''
             @slug = generateSlug @title
             @category = manifest.category || null
-            @css = manifest.css || false
+            @home = manifest.home || null
+            @css = manifest.css || null
             @code_highlight_theme = manifest.code_highlight_theme || 'sunburst'
             
             files = manifest.files || []
-            files.unshift manifest.home
+            files.unshift @home if @home
             loadedFiles = files.length
             for j in [0...files.length]
                 do =>
                     i = j
                     @readUri @makeUriAbsolute(files[i]), (data) =>
-                        if i == 0
-                            @home = @renderPage(data)
-                            @homeFile = files[i]
+                        if @home and i == 0
+                            @slugs[i] = '_home'
                         else
-                            @files[i] = files[i]
                             @slugs[i] = generateSlug files[i].substr 0, files[i].lastIndexOf('.')
-                            @pages[@slugs[i]] = @renderPage(data)
+                        
+                        @files[i] = files[i]
+                        @filesData[i] = data
+                        @pages[@slugs[i]] = @renderPage(data)
                             
                         if --loadedFiles == 0
                             @buildTableOfContent()
@@ -185,7 +186,8 @@ class Manifest extends events.EventEmitter
         parentScopes = []
         currentLevel = 0
         maxLevel = 2
-        for i in [1...@files.length]
+        start = if @home then 1 else 0
+        for i in [start...@files.length]
             slug = @slugs[i]
             hTags = @pages[slug].match /<h([1-6])>.+<\/h\1>/gi
             for hTag in hTags || []
@@ -219,7 +221,6 @@ class Manifest extends events.EventEmitter
         return if @filename.match /^https?:\/\//
         watcher = (curr, prev) => if curr.mtime > prev.mtime then @reload()
         fs.watchFile @filename, watcher
-        if @homeFile then fs.watchFile @homeFile, watcher
         for i, f of @files
             fs.watchFile @makeUriAbsolute(f), watcher
             
@@ -233,7 +234,6 @@ class Manifest extends events.EventEmitter
             filename: @filename
             title: @title
             slug: @slug
-            home: @home
             pages: @pages
             files: @files
             slugs: @slugs
@@ -250,7 +250,6 @@ Manifest.unserialize = (str) ->
     manifest = new Manifest(data.filename)
     manifest.title = data.title
     manifest.slug = data.slug
-    manifest.home = data.home
     manifest.pages = data.pages
     manifest.files = data.files
     manifest.slugs = data.slugs

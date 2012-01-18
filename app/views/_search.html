@@ -1,0 +1,10 @@
+<h2>Search results for "<%= @search.query %>"</h2>
+<% if @search.hits.length > 0: %>
+    <ol id="search-results">
+        <% for slug in @search.hits: %>
+            <li><a href="<%= @baseUrl %>/<%= slug %>"><%= slug %></a></li>
+        <% end %>
+    </ol>
+<% else: %>
+    No results found!
+<% end %>
