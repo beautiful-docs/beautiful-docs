@@ -12,6 +12,7 @@ Features:
  - Clean and simple to use interface
  - Supports local and remote manifests
  - Stylesheet for printing
+ - Supports [embedly](http://embed.ly/)
  - Easy to customize (eg.: for organizations)
 
 Requires a recent build of nodejs (tested on 0.6.7) and npm.
@@ -46,7 +47,9 @@ Available options:
  -  *--readonly*: Disables the import feature from the web interface
  -  *--many*: The server.coffee args should be directories containing subfolders with manifest.json files
  -  *--watch*: Watch files for modifications and automatically reload them
- -  *--title*: Title in the web interface
+ -  *--title=string*: Title in the web interface
+ -  *--embedly=apikey*: Activate embedly with the specified api key
+    Links to embed must be placed alone in a paragraph.
 
 ## Web interface
 

@@ -63,6 +63,7 @@ session =
         watch: false
         many: false
         search: false
+        embedly: false
     }
 
 for arg in process.argv.slice(2)
