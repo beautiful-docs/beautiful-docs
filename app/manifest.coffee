@@ -5,7 +5,6 @@ url = require 'url'
 http = require 'http'
 https = require 'https'
 crypto = require 'crypto'
-md = require('node-markdown').Markdown
 
 #
 # Transforms a string to an uri-compatible one
@@ -21,14 +20,23 @@ generateSlug = (str) ->
     str = str.replace /^-+|-+$/g, ""
 
 #
+# Markdown renderer
+#
+class MarkdownRenderer
+    render: (source) ->
+        marked = require 'marked'
+        return marked(source)
+
+#
 # Represents a manifest file
 #
 # Stores all information from the manifest as well
 # as rendered pages and the computed table of content
 #
 class Manifest extends events.EventEmitter
-    constructor: (filename) ->
+    constructor: (filename, renderer=null) ->
         @filename = filename
+        @renderer = renderer || new MarkdownRenderer
         @reset()
         
     reset: ->
@@ -153,7 +161,7 @@ class Manifest extends events.EventEmitter
     # @return string
     #
     renderPage: (source) ->
-        html = md source
+        html = @renderer.render source
         imgs = html.match /<img[^>]*>/gi
         if imgs
             for img in imgs
