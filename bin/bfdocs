@@ -1,0 +1,81 @@
+#!/usr/bin/env coffee
+###
+BEAUTIFUL DOCS
+Copyright (C) 2012 Maxime Bouroumeau-Fuseau
+
+Usage: bfdocs [path/to/manifest.json, [path/to/other/manifest.json, ...]]
+
+Available options:
+
+    --server            Starts the web server. Default options unless --export is specified
+    --export-to=/path   Exports manifests as HTML in the specified path
+    --watch             Watch files for modifications and automatically reload them
+    --title=title       Title in the web interface
+    --search=host       The hostname of the ElasticSearch server to connect to
+    --embedly=apikey    Enable embedly
+    --store=package     Which storage engine to use
+    --port=8080         Which port should the server listen on
+
+###
+
+fs = require 'fs'
+path = require 'path'
+
+argv = []
+options =
+    server: true
+    export_to: false
+    title: 'Beautiful Docs'
+    watch: false
+    store: "../app/store"
+    search: false
+    embedly: false
+    renderer: "../app/renderers#MarkdownRenderer"
+
+for arg in process.argv.slice(2)
+    if arg.substr(0, 2) == '--'
+        parts = arg.split '='
+        options[parts[0].substr(2).replace('-', '_')] = parts[1] || true
+    else
+        argv.push arg
+
+if argv.length == 0
+    console.log 'At least one manifest must be specified'
+    process.exit(1)
+
+loadClass = (fqdn) ->
+    parts = fqdn.split('#')
+    m = require parts[0]
+    if parts.length > 1
+        if not parts[1] in m
+            throw Error("Object '#{parts[1]}' cannot be found in '#{parts[0]}'")
+        return m[parts[1]]
+    else
+        return m
+
+Store = loadClass options.store
+Renderer = loadClass options.renderer
+Manifest = require '../app/manifest'
+
+store = new Store(options)
+renderer = new Renderer(options)
+
+run = ->
+    if options.export_to
+        
+    else
+        Server = require '../app/server'
+        server = new Server(store, options)
+        server.start(options.port)
+
+nb_uris = argv.length
+for uri in argv
+    uri = fs.realpathSync(uri) if path.existsSync(uri)
+    console.log "Loading manifest '#{uri}'"
+    manifest = new Manifest(renderer)
+    manifest.load uri, -> 
+        store.store manifest
+        if options.watch
+            console.log "Watching file '" + manifest.filename + "' for changes"
+            manifest.watch()
+        if --nb_uris == 0 then run()

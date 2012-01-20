@@ -13,13 +13,10 @@
             <h1><%= @options.title %></h1>
         </header>
         <div id="main">
-            <% if not @options.readonly: %>
-                <form id="import" method="get" action="/import">
-                    <input type="text" name="uri" value="github:maximebf/beautiful-docs" class="default">
-                    <input type="submit" value="Read">
-                    <span class="notice">
-                        Enter a github repo or an url pointing to a manifest file as described <a href="/import?uri=github:maximebf/beautiful-docs">here</a>
-                    </span>
+            <% if @options.search: %>
+                <form id="search" method="get" action="/_search">
+                    <input type="text" name="q" class="default">
+                    <input type="submit" value="Search">
                 </form>
             <% end %>
             <% for categoryName, manifests of @categories: %>

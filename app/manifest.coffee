@@ -20,23 +20,13 @@ generateSlug = (str) ->
     str = str.replace /^-+|-+$/g, ""
 
 #
-# Markdown renderer
-#
-class MarkdownRenderer
-    render: (source) ->
-        marked = require 'marked'
-        return marked(source)
-
-#
 # Represents a manifest file
 #
 # Stores all information from the manifest as well
 # as rendered pages and the computed table of content
 #
 class Manifest extends events.EventEmitter
-    constructor: (filename, renderer=null) ->
-        @filename = filename
-        @renderer = renderer || new MarkdownRenderer
+    constructor: (@renderer) ->
         @reset()
         
     reset: ->
@@ -62,11 +52,11 @@ class Manifest extends events.EventEmitter
     # @param function callback
     #
     load: (filename, callback) ->
-        if typeof(filename) == 'function'
-            callback = filename
-            filename = false
         @reset()
-        @filename = filename || @filename
+        if filename.match /^github:/
+            filename = "https://raw.github.com/" + filename.substr(7) + "/master/docs/manifest.json"
+        @filename = filename
+        
         @readUri @filename, (data) =>
             manifest = JSON.parse(data)
             @title = manifest.title || ''
@@ -258,4 +248,4 @@ Manifest.unserialize = (str) ->
     manifest.loaded = true
     return manifest
             
-exports.Manifest = Manifest
+module.exports = Manifest

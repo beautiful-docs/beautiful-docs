@@ -6,7 +6,7 @@ class Search
     index: (manifest, callback) ->
         c = 1 + manifest.slugs.length
         handler = (res) ->
-            if --c == 0 then callback()
+            if --c == 0 and callback then callback()
 
         @request 'put', manifest.slug, '_home', {body: manifest.homeData}, handler
         for slug, i in manifest.slugs
