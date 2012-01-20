@@ -7,15 +7,16 @@ class Server
 
     constructor: (@store, @options={}) ->
         @app = express.createServer()
+        @public_dir = @options.public_dir or (__dirname + '/public')
         @app.configure =>
             @app.use express.logger()
             @app.use express.bodyParser()
             @app.use express.cookieParser()
             @app.use express.compiler({
                 src: __dirname + '/assets', 
-                dest: __dirname + '/../public',
+                dest: @public_dir,
                 enable: ['less', 'coffeescript'] })
-            @app.use express.static(__dirname + '/../public')
+            @app.use express.static(@public_dir)
             
             @app.set 'view engine', 'html'
             @app.set 'views', __dirname + '/views'

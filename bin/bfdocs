@@ -13,8 +13,10 @@ Available options:
     --title=title       Title in the web interface
     --search=host       The hostname of the ElasticSearch server to connect to
     --embedly=apikey    Enable embedly
-    --store=package     Which storage engine to use
+    --store=fqdn        Which storage engine to use
     --port=8080         Which port should the server listen on
+    --renderer=fqdn     Which renderer to use
+    --public-dir=/path  Where to store publicly accessible files (server mode)
 
 ###
 
@@ -31,6 +33,7 @@ options =
     search: false
     embedly: false
     renderer: "../src/renderers#MarkdownRenderer"
+    public_dir: __dirname + "/../public"
 
 for arg in process.argv.slice(2)
     if arg.substr(0, 2) == '--'
@@ -52,6 +55,11 @@ loadClass = (fqdn) ->
         return m[parts[1]]
     else
         return m
+
+if not path.existsSync(options.public_dir)
+    fs.mkdirSync(options.public_dir)
+    fs.mkdirSync(options.public_dir + "/css")
+    fs.mkdirSync(options.public_dir + "/js")
 
 Store = loadClass options.store
 Renderer = loadClass options.renderer
