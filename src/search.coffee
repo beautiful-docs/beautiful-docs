@@ -40,4 +40,4 @@ class Search
         req.write JSON.stringify(payload)
         req.end()
 
-exports.Search = Search
+module.exports = Search
