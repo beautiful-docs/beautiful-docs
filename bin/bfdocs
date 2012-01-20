@@ -27,10 +27,10 @@ options =
     export_to: false
     title: 'Beautiful Docs'
     watch: false
-    store: "../app/store"
+    store: "../src/store"
     search: false
     embedly: false
-    renderer: "../app/renderers#MarkdownRenderer"
+    renderer: "../src/renderers#MarkdownRenderer"
 
 for arg in process.argv.slice(2)
     if arg.substr(0, 2) == '--'
@@ -55,7 +55,7 @@ loadClass = (fqdn) ->
 
 Store = loadClass options.store
 Renderer = loadClass options.renderer
-Manifest = require '../app/manifest'
+Manifest = require '../src/manifest'
 
 store = new Store(options)
 renderer = new Renderer(options)
@@ -64,7 +64,7 @@ run = ->
     if options.export_to
         
     else
-        Server = require '../app/server'
+        Server = require '../src/server'
         server = new Server(store, options)
         server.start(options.port)
 
