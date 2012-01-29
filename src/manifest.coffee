@@ -5,12 +5,13 @@ url = require 'url'
 http = require 'http'
 https = require 'https'
 crypto = require 'crypto'
+marked = require 'marked'
+async = require 'async'
+_ = require 'underscore'
 
-#
 # Transforms a string to an uri-compatible one
 #
-# @param string str
-#
+# str : The string to transform
 generateSlug = (str) ->
     str = str.toLowerCase()
     str = str.replace /^\s+|\s+$/g, ""
@@ -19,182 +20,191 @@ generateSlug = (str) ->
     str = str.replace /[-]+/g, "-"
     str = str.replace /^-+|-+$/g, ""
 
+# Extracts the name of the file without the extension
 #
-# Represents a manifest file
+# filename : Extracts only the name (without the extension) of a file
+extractNameFromUri = (filename) ->
+    path.basename(filename, path.extname(filename))
+
+# Returns whether the uri representes a local file
+#
+# uri : A string representing an URI (local file or starting with http(s)://)
+isLocalFile = (uri) -> not uri.match /^https?:\/\//
+
+# Reads a file
+#
+# uri       : A string representing an URI (local file or starting with http(s)://)
+# callback  : A function that will be called with the file's content
+readUri = (uri, callback) ->
+    if not isLocalFile(uri)
+        urlInfo = url.parse uri
+        
+        options = 
+            host: urlInfo.hostname
+            port: urlInfo.port || if urlInfo.protocol == 'http:' then 80 else 443
+            path: urlInfo.path
+            method: 'GET'
+             
+        responseHandler = (res) ->
+            res.on 'data', (chunk) -> callback null, chunk.toString()
+            res.on 'error', (err) -> callback err
+        
+        if urlInfo.protocol == 'https:'
+            request = https.request options, responseHandler
+        else
+            request = http.request options, responseHandler
+        request.end()
+    else
+        fs.readFile uri, (err, data) ->
+            callback err, data.toString()
+                
+# Makes the uri relative to another one
+#
+# uri        : A string representing an URI
+# relativeTo : The URI to make the first parameter relative to
+makeUriRelativeTo = (uri, relativeTo) ->
+    if not isLocalFile(uri) or uri.substr(0, 1) == '/'
+        uri
+    else if not isLocalFile(relativeTo)
+        urlInfo = url.parse relativeTo
+        urlInfo.pathname = path.join path.dirname(urlInfo.pathname), uri
+        url.format urlInfo
+    else
+        path.join path.dirname(relativeTo), uri
+
+
+# Represents a file from a manifest
+class ManifestFile
+    # Public: Creates a ManifestFile object from the specified uri
+    #
+    # uri       : Location of the file
+    # callback  : A function that will be called with the ManifestFile object
+    @load: (uri, callback) ->
+        f = new ManifestFile(uri)
+        f.refresh (err) -> callback err, f
+
+    # Private: Creates a ManifestFile object
+    #
+    # uri   : URI of the file
+    # raw   : Content of the file
+    constructor: (@uri) ->
+        @slug = generateSlug extractNameFromUri @uri
+
+    # Public: Refreshes the content
+    #
+    # callback : A function that will be called once done
+    refresh: (callback=null) ->
+        readUri @uri, (err, data) =>
+            if err
+                callback(err) if callback
+                return
+            @raw = data
+            @render()
+            callback null
+
+    # Public: Makes an uri relative to the uri for this file
+    #
+    # uri   : A string
+    makeRelativeUri: (uri) ->
+        makeUriRelativeTo uri, @uri
+
+    # Private: Transforms markdown files to html, extracting
+    # urls of relative image and adding anchor tags before all <h> tags
+    render: ->
+        html = marked @raw
+
+        @assets = []
+        imgs = html.match /<img[^>]*>/gi
+        for img in imgs || []
+            src = img.match /src=("|')([^"']+)\1/i
+            if src and isLocalFile(src[2])
+                @assets.push src[2]
+
+        hTags = html.match /<h([1-6])>.+<\/h\1>/gi
+        for hTag in hTags || []
+            title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
+            anchor = generateSlug title
+            html = html.replace hTag, '<a name="' + anchor + '"></a>' + hTag
+
+        @content = html
+
+
+# Represents a manifest
 #
 # Stores all information from the manifest as well
-# as rendered pages and the computed table of content
-#
-class Manifest extends events.EventEmitter
-    constructor: (@renderer) ->
-        @reset()
-        
-    reset: ->
-        @title = 'Documentation'
-        @slug = 'documentation'
-        @category = null
+# as rendered files and the computed table of content
+class Manifest
+    # Public: Creates a Manifest object reading the options from the given uri
+    #
+    # uri       : The URI of a JSON-encoded file with the options
+    # callback  : A function that will be called with the Manifest object
+    @load: (uri, callback) ->
+        if uri.match /^github:/
+            uri = "https://raw.github.com/" + uri.substr(7) + "/master/docs/manifest.json"
+
+        readUri uri, (err, data) =>
+            return callback(err) if err
+            options = JSON.parse(data)
+            m = new Manifest(options, uri)
+            files = options.files || []
+            files.unshift options.home if options.home
+            m.addFiles files, (err) => callback err, m
+
+    # Public: Constructor
+    #
+    # options   : An object with the manifest's options
+    # uri       : The URI of the manifest
+    constructor: (options, @uri='.') -> 
+        @title = options.title || ''
+        @slug = generateSlug @title
+        @category = options.category || null
+        @ignoreFirstFileForToc = options.home?
+        @maxTocLevel = options.max_toc_level || 2
+        @options = _.extend({}, options)
         @files = []
-        @filesData = []
-        @slugs = []
-        @pages = {}
-        @tableOfContent = []
-        @css = false
-        @code_highlight_theme = 'sunburst'
-        @loaded = false
         
-    reload: (callback) ->
-        @load @filename, callback
-        
+    # Public: Adds files
+    # The table of content will be rebuild
     #
-    # Loads a manifest file
-    #
-    # @param string filename
-    # @param function callback
-    #
-    load: (filename, callback) ->
-        @reset()
-        if filename.match /^github:/
-            filename = "https://raw.github.com/" + filename.substr(7) + "/master/docs/manifest.json"
-        @filename = filename
-        
-        @readUri @filename, (data) =>
-            manifest = JSON.parse(data)
-            @title = manifest.title || ''
-            @slug = generateSlug @title
-            @category = manifest.category || null
-            @home = manifest.home || null
-            @css = manifest.css || null
-            @code_highlight_theme = manifest.code_highlight_theme || 'sunburst'
-            
-            files = manifest.files || []
-            files.unshift @home if @home
-            loadedFiles = files.length
-            for j in [0...files.length]
-                do =>
-                    i = j
-                    @readUri @makeUriAbsolute(files[i]), (data) =>
-                        if @home and i == 0
-                            @slugs[i] = '_home'
-                        else
-                            @slugs[i] = generateSlug files[i].substr 0, files[i].lastIndexOf('.')
-                        
-                        @files[i] = files[i]
-                        @filesData[i] = data
-                        @pages[@slugs[i]] = @renderPage(data)
-                            
-                        if --loadedFiles == 0
-                            @buildTableOfContent()
-                            @loaded = true
-                            callback() if callback
-                            @emit 'loaded'
-    
-    #
-    # Reads a file from the given uri and calls callback with the data
-    #
-    # Uri can be an url starting with http:// or https://, or a local filename
-    #
-    # @param string uri
-    # @param function callback
-    #
-    readUri: (uri, callback) ->
-        if not @isLocalFile(uri)
-            urlInfo = url.parse uri
-            
-            options = 
-                host: urlInfo.hostname
-                port: urlInfo.port || if urlInfo.protocol == 'http:' then 80 else 443
-                path: urlInfo.path
-                method: 'GET'
-                 
-            responseHandler = (res) ->
-                res.on 'data', (chunk) -> callback chunk.toString()
-                res.on 'error', (err) -> throw err
-            
-            if urlInfo.protocol == 'https:'
-                request = https.request options, responseHandler
-            else
-                request = http.request options, responseHandler
-            request.end()
-        else
-            fs.readFile uri, (err, data) ->
-                if err then throw err
-                callback data.toString()
-                
-    #
-    # Checks if the uri is a local file or not
-    #
-    # @param string uri
-    # @return bool
-    #
-    isLocalFile: (uri) ->
-        not uri.match /^https?:\/\//
-                
-    #
-    # Makes the uri absolute
-    #
-    # If uri is a relative uri, it will be resolved relative to the manifests path
-    #
-    # @param string uri
-    # @return string
-    #
-    makeUriAbsolute: (uri) ->
-        if not @isLocalFile(uri) or uri.substr(0, 1) == '/'
-            uri
-        else if not @isLocalFile(@filename)
-            urlInfo = url.parse @filename
-            urlInfo.pathname = path.join path.dirname(urlInfo.pathname), uri
-            url.format urlInfo
-        else
-            path.join path.dirname(@filename), uri
-            
-    #
-    # Transforms markdown sources to HTML
-    #
-    # @param string source
-    # @return string
-    #
-    renderPage: (source) ->
-        html = @renderer.render source
-        imgs = html.match /<img[^>]*>/gi
-        if imgs
-            for img in imgs
-                src = img.match /src=("|')([^"']+)\1/i
-                if src and not @isLocalFile(src[2])
-                    url = @makeUriAbsolute src[2]
-                    img2 = img.replace src[0], "src=\"#{url}\""
-                    html = html.replace img, img2
-        return html
-            
-    #
-    # Buils the table of content from titles in the pages
-    #
-    # Uses <h1> and <h2> tags from the HTML sources
-    #
+    # files     : An array of URIs
+    # callback  : A function that will be called once all files are added
+    addFiles: (files, callback=null) ->
+        lock = files.length
+        d = @files.length
+        for i in [0...files.length]
+            do =>
+                j = d + i
+                ManifestFile.load @makeRelativeUri(files[i]), (err, f) =>
+                    if err 
+                        lock = -1
+                        callback(err) if callback
+                        return
+                    @files[j] = f
+                    if --lock == 0
+                        @buildTableOfContent()
+                        callback(null) if callback
+
+    # Private: Builds the table of content from the <h> tags
     buildTableOfContent: ->
         @tableOfContent = []
         scope = @tableOfContent
         parentScopes = []
         currentLevel = 0
-        maxLevel = 2
-        start = if @home then 1 else 0
-        for i in [start...@files.length]
-            slug = @slugs[i]
-            hTags = @pages[slug].match /<h([1-6])>.+<\/h\1>/gi
+        for i, file of @files
+            if @ignoreFirstFileForToc and i == '0' then continue
+            hTags = file.content.match /<h([1-6])>.+<\/h\1>/gi
             for hTag in hTags || []
                 level = parseInt hTag.substr(2, 1)
                 title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
                 anchor = generateSlug title
-                @pages[slug] = @pages[slug].replace hTag, '<a name="' + anchor + '"></a>' + hTag
                 
-                if level > maxLevel then continue
+                if level > @maxTocLevel then continue
                 if level <= currentLevel
                     parentScopes = parentScopes.slice 0, parentScopes.length - (currentLevel - level)
                     scope = parentScopes.pop()
                     
                 entry = 
-                    index: i
-                    filename: @files[i]
-                    slug: slug
+                    slug: file.slug
                     title: title
                     anchor: anchor
                     childs: []
@@ -203,49 +213,33 @@ class Manifest extends events.EventEmitter
                 parentScopes.push scope
                 scope = entry.childs
                 currentLevel = level
+
+    # Public: Refreshes all files and rebuilds the table of content
+    #
+    # callback : A function that will be called once done
+    refresh: (callback=null) ->
+        async.forEach @files, ((f, cb) -> f.refresh cb), (err) =>
+            if err
+                callback(err) if err
+                return
+            @buildTableOfContent()
+            callback(null) if callback
+
+    # Public: Makes an uri relative to this manifest's URI
+    #
+    # uri : A string representing an URI
+    makeRelativeUri: (uri) ->
+        makeUriRelativeTo uri, @uri
     
+    # Watches all the associated files for changes
     #
-    # Watches the manifest and all the pages files for changes
-    #
-    watch: ->
-        return if @filename.match /^https?:\/\//
-        watcher = (curr, prev) => if curr.mtime > prev.mtime then @reload()
-        fs.watchFile @filename, watcher
-        for i, f of @files
-            fs.watchFile @makeUriAbsolute(f), watcher
-            
-    #
-    # Serializes the manifest to a JSON-encoded string
-    #
-    # @return string
-    #    
-    serialize: ->
-        JSON.stringify
-            filename: @filename
-            title: @title
-            slug: @slug
-            pages: @pages
-            files: @files
-            slugs: @slugs
-            tableOfContent: @tableOfContent
-            css: @css
-        
-#
-# Builds a manifest object from a JSON-encoded string
-#
-# @param string str
-#
-Manifest.unserialize = (str) ->
-    data = JSON.parse(str)
-    manifest = new Manifest(data.filename)
-    manifest.title = data.title
-    manifest.slug = data.slug
-    manifest.pages = data.pages
-    manifest.files = data.files
-    manifest.slugs = data.slugs
-    manifest.tableOfContent = data.tableOfContent
-    manifest.css = data.css
-    manifest.loaded = true
-    return manifest
+    # callback : A function that will be called whenever a files changes
+    watch: (callback) ->
+        return if not isLocalFile(@uri)
+        for f in @files
+            fs.watchFile f.uri, (curr, prev) => 
+                if curr.mtime > prev.mtime
+                    @refresh (err) -> callback(err)
+
             
 module.exports = Manifest

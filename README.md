@@ -2,7 +2,7 @@
 # Beautiful docs
 
 Beautiful docs is a documentation viewer based on markdown files.  
-Documentation manuals are described in a manifest file using JSON.
+Documentation manuals can be described in a manifest file using JSON.
 
 Features:
 
@@ -14,47 +14,41 @@ Features:
  - Stylesheet for printing
  - Supports [embedly](http://embed.ly/)
  - Easy to customize (eg.: for organizations)
+ - Support for multiple manifests with an index page
 
-Requires a recent build of nodejs (tested on 0.6.7) and npm.
+Requires a recent build of nodejs (tested on 0.6.7).  
+Install using npm:
+
+    npm install bfdocs
 
 
 ## Manifests
 
 A manifest file contains a JSON object with the following properties:
 
- - *home*: The file to display as the manual homepage (won't be used when computing the TOC)
- - *files*: An array of files
  - *title*: Title of the manual (optional, default "Documentation")
+ - *files*: An array of files
+ - *home*: The file to display as the manual homepage (won't be used when computing the TOC)
  - *category*: Category of the manual (used on the homepage) (optional, default none)
  - *css*: An absolute URL to a CSS stylesheet that will be included in the page
- - *code\_highlight\_theme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
+ - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
+ - *embedly*: Activate embedly with the specified api key
+    Links to embed must be placed alone in a paragraph.
 
 Files can be absolute URIs or relative to the manifest file.  
 Example:
 
     {
         "title": "Beautiful Docs",
-        "home": "README.md",
         "files": ["README.md"]
     }
 
 ## Usage
 
-    coffee server.coffee [path/to/manifest.json, [path/to/manifest.json, ...]]
+    bfdocs path/to/manifest.json [path/to/output/dir]
 
 Available options:
 
- -  *--readonly*: Disables the import feature from the web interface
- -  *--many*: The server.coffee args should be directories containing subfolders with manifest.json files
- -  *--watch*: Watch files for modifications and automatically reload them
- -  *--title=string*: Title in the web interface
- -  *--embedly=apikey*: Activate embedly with the specified api key
-    Links to embed must be placed alone in a paragraph.
-
-## Web interface
-
-![Web interface](https://raw.github.com/maximebf/beautiful-docs/master/docs/screenshot.png)
-
-If --readonly is not used, a form will be presented of the homepage to import manifests.  
-Only urls can be used in this form. Manifests located on a *docs/* folder in a github repo
-can be quickly added using "github:user/repo".
+ - *--server*: Activates a web server to browse generated files
+ - *--port*: Sets the port of the web server (default is 8080)
+ - *--watch*: Watches files for modifications and automatically reload them

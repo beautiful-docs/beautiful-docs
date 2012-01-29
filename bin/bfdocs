@@ -2,43 +2,25 @@
 ###
 BEAUTIFUL DOCS
 Copyright (C) 2012 Maxime Bouroumeau-Fuseau
-
-Usage: bfdocs [path/to/manifest.json, [path/to/other/manifest.json, ...]]
-
-Available options:
-
-    --server            Starts the web server. Default options unless --export is specified
-    --export-to=/path   Exports manifests as HTML in the specified path
-    --watch             Watch files for modifications and automatically reload them
-    --title=title       Title in the web interface
-    --search=host       The hostname of the ElasticSearch server to connect to
-    --embedly=apikey    Enable embedly
-    --store=fqdn        Which storage engine to use
-    --port=8080         Which port should the server listen on
-    --renderer=fqdn     Which renderer to use
-    --public-dir=/path  Where to store publicly accessible files (server mode)
-
 ###
 
 fs = require 'fs'
 path = require 'path'
+_ = require 'underscore'
 
 argv = []
 options =
-    server: true
-    export_to: false
-    title: 'Beautiful Docs'
+    server: false
     watch: false
-    store: "../src/store"
-    search: false
-    embedly: false
-    renderer: "../src/renderers#MarkdownRenderer"
-    public_dir: __dirname + "/../public"
+    port: 8080
+    many: false
 
 for arg in process.argv.slice(2)
     if arg.substr(0, 2) == '--'
         parts = arg.split '='
-        options[parts[0].substr(2).replace('-', '_')] = parts[1] || true
+        v = parts[1] || true
+        v = false if v == 'false'
+        options[parts[0].substr(2).replace('-', '_')] = v
     else
         argv.push arg
 
@@ -46,44 +28,66 @@ if argv.length == 0
     console.log 'At least one manifest must be specified'
     process.exit(1)
 
-loadClass = (fqdn) ->
-    parts = fqdn.split('#')
-    m = require parts[0]
-    if parts.length > 1
-        if not parts[1] in m
-            throw Error("Object '#{parts[1]}' cannot be found in '#{parts[0]}'")
-        return m[parts[1]]
-    else
-        return m
+bfdocs = require '..'
 
-if not path.existsSync(options.public_dir)
-    fs.mkdirSync(options.public_dir)
-    fs.mkdirSync(options.public_dir + "/css")
-    fs.mkdirSync(options.public_dir + "/js")
+destDir = './out'
+if argv.length > 1 and not options.many
+    destDir = _.last(argv)
+    argv = _.initial(argv)
+manifestFilenames = argv
 
-Store = loadClass options.store
-Renderer = loadClass options.renderer
-Manifest = require '../src/manifest'
+generatorOptions = 
+    title: options.title || 'Beautiful Docs'
+    baseUrl: options.base_url || ''
+    displayHeader: options.display_header ? true
 
-store = new Store(options)
-renderer = new Renderer(options)
+lock = manifestFilenames.length
+manifests = []
 
-run = ->
-    if options.export_to
-        
-    else
-        Server = require '../src/server'
-        server = new Server(store, options)
-        server.start(options.port)
+generateManifest = (manifest, callback=null) ->
+    dest = destDir
+    opts = _.extend({}, generatorOptions)
+    if manifestFilenames.length > 1
+        dest = path.join destDir, manifest.slug
+        _.extend opts, {baseUrl: generatorOptions.baseUrl + '/' + manifest.slug}
+    bfdocs.generate manifest, dest, opts, callback
 
-nb_uris = argv.length
-for uri in argv
-    uri = fs.realpathSync(uri) if path.existsSync(uri)
-    console.log "Loading manifest '#{uri}'"
-    manifest = new Manifest(renderer)
-    manifest.load uri, -> 
-        store.store manifest
+generateIndex = (callback=null) ->
+    bfdocs.generateIndex options.title || 'Beautiful docs', 
+        manifests, path.join(destDir, 'index.html'), generatorOptions, callback
+
+startServer = (err) ->
+    if options.server
+        console.log "Starting server on port #{options.port}"
+        bfdocs.serveStaticDir destDir, options.port
+    else if options.watch
+        console.log "Press Ctrl+C to quit"
+        setInterval (-> 1), 100
+
+handleManifest = (err, manifest) ->
+    if err
+        console.log "An error occured while generating a manifest: #{err}"
+        return
+    manifests.push manifest
+    generateManifest manifest, (err) ->
+        if err
+            lock--
+            console.log "An error occured while generating a manifest: #{err}"
+            return
         if options.watch
-            console.log "Watching file '" + manifest.filename + "' for changes"
-            manifest.watch()
-        if --nb_uris == 0 then run()
+            manifest.watch -> 
+                console.log "Changes detected to '#{manifest.uri}'"
+                generateManifest manifest
+        if --lock == 0
+            if manifestFilenames.length > 1
+                generateIndex startServer
+            else
+                startServer()
+
+for manifestFilename in manifestFilenames
+    if fs.statSync(manifestFilename).isDirectory()
+        console.log "Generating documentation from directory '#{manifestFilename}'"
+        bfdocs.createManifestFromDir manifestFilename, handleManifest
+    else
+        console.log "Generating documentation from manifest '#{manifestFilename}'"
+        bfdocs.open manifestFilename, handleManifest

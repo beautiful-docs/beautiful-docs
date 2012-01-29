@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title><%= @manifest.title %></title>
+    <link type="text/css" rel="stylesheet" href="http://fonts.googleapis.com/css?family=Droid+Sans&subset=latin">
+    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>/css/reset.css">
+    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>/css/docs.css">
+    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>/css/print.css" media="print">
+    <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/<%= @manifest.options.codeHighlightTheme || 'sunburst' %>.min.css">
+    <% if @manifest.options.css: %>
+        <link type="text/css" rel="stylesheet" href="<%- @manifest.options.css %>">
+    <% end %>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+    <script type="text/javascript" src="http://yandex.st/highlightjs/6.1/highlight.min.js"></script>
+    <% if @manifest.options.embedly: %>
+        <script type="text/javascript" src="http://scripts.embed.ly/jquery.embedly.min.js"></script>
+        <script type="text/javascript">
+            $(function(){
+                $('#content p:not(.disable-embedly) a:only-child').parent().embedly({
+                    key:'<%= @manifest.options.embedly %>',
+                    maxWidth: 700
+                });
+            });
+        </script>
+    <% end %>
+    <script type="text/javascript" src="<%= @baseUrl %>/js/viewer.js"></script>
+</head>
+<body>
+    <div id="page">
+        <a name="top" />
+        <% if @displayHeader: %>
+            <header id="header">
+                <h1><a href="<%= @baseUrl %>/"><%= @manifest.title %></a></h1>
+            </header>
+        <% end %>
+        <%- @content %>
+        <footer id="footer">
+            Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
+            <a href="#top">Back to top</a> - <a href="<%= @baseUrl %>/_all.html?print=1">Print</a>
+        </footer>
+    </div>
+</body>
+</html>
