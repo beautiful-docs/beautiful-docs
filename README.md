@@ -1,4 +1,3 @@
-
 # Beautiful docs
 
 Beautiful docs is a documentation viewer based on markdown files.  
@@ -15,7 +14,7 @@ Features:
  - Easy to customize (eg.: for organizations)
  - Support for multiple manifests with an index page
 
-![Example of generated documentation](docs/screenshot.png)
+![Example of generated documentation](https://github.com/maximebf/beautiful-docs/raw/master/docs/screenshot.png)
 
 Requires a recent build of nodejs (tested on 0.6.7).  
 Install using npm:
