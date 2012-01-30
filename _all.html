@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Beautiful docs</title>
+    <link type="text/css" rel="stylesheet" href="http://fonts.googleapis.com/css?family=Droid+Sans&subset=latin">
+    <link type="text/css" rel="stylesheet" href="/css/reset.css">
+    <link type="text/css" rel="stylesheet" href="/css/docs.css">
+    <link type="text/css" rel="stylesheet" href="/css/print.css" media="print">
+    <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/sunburst.min.css">
+    
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+    <script type="text/javascript" src="http://yandex.st/highlightjs/6.1/highlight.min.js"></script>
+    
+    <script type="text/javascript" src="/js/viewer.js"></script>
+</head>
+<body>
+    <div id="page">
+        <a name="top" />
+        
+            <header id="header">
+                <h1><a href="/">Beautiful docs</a></h1>
+            </header>
+        
+        <div id='content'><a name="beautiful-docs"></a><h1>Beautiful docs</h1>
+<p>Beautiful docs is a documentation viewer based on markdown files.<br>Documentation manuals can be described in a manifest file using JSON.
+
+</p>
+<p>Features:
+
+</p>
+<ul><li><a href="http://daringfireball.net/projects/markdown/syntax">Markdown syntax</a> (with support for <a href="http://github.github.com/github-flavored-markdown/">Github Flavored Markdown</a>)</li><li>Uses files (store them anywhere, in git for example)</li><li>Automatically generate the table of content</li><li>Clean and simple to use interface</li><li>Stylesheet for printing</li><li>Supports <a href="http://embed.ly/">embedly</a></li><li>Easy to customize (eg.: for organizations)</li><li>Support for multiple manifests with an index page </li></ul>
+<p><img src="docs/screenshot.png" alt="Example of generated documentation">
+
+</p>
+<p>Requires a recent build of nodejs (tested on 0.6.7).<br>Install using npm:
+
+</p>
+<pre><code>npm install beautiful-docs</code></pre>
+<a name="manifests"></a><h2>Manifests</h2>
+<p>Manifests are not mandatory but they allow to specify custom options for your documentation.<br>A manifest file contains a JSON object with the following properties:
+
+</p>
+<ul><li><em>title</em>: Title of the manual (optional, default &quot;Documentation&quot;)</li><li><em>files</em>: An array of files</li><li><em>home</em>: The file to display as the manual homepage (won&apos;t be used when computing the TOC)</li><li><em>category</em>: Category of the manual (used on the homepage) (optional, default none)</li><li><em>css</em>: An absolute URL to a CSS stylesheet that will be included in the page</li><li><em>codeHighlightTheme</em>: The highlightjs theme for code highlighting (<a href="http://softwaremaniacs.org/soft/highlight/en/">http://softwaremaniacs.org/soft/highlight/en/</a>)</li><li><em>embedly</em>: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph. </li></ul>
+<p>Files can be absolute URIs or relative to the manifest file.<br>Example:
+
+</p>
+<pre><code>{
+    &quot;title&quot;: &quot;Beautiful Docs&quot;,
+    &quot;files&quot;: [&quot;README.md&quot;]
+}</code></pre>
+<a name="usage"></a><h2>Usage</h2>
+<pre><code>bfdocs [options] [/path/to/manifest.json] [/path/to/output/dir]</code></pre>
+<p>Available options:
+
+</p>
+<ul><li><em>--help</em> : Display the help information</li><li><em>--server</em> : Create an HTTP server to access the generated documentation</li><li><em>--port</em> : The port on which the HTTP server shoud listen</li><li><em>--watch</em> : Watch files for modifications and reload them automatically</li><li><em>--manifests-only</em> : Do not treat the last argument as the output dir but also as a manifest</li><li><em>--title</em> : Title of the index page</li><li><em>--base-url</em> : Base url of all links</li><li><em>--index-only</em> : Only generate the index file. The last argument should be the filename of the index</li><li><em>--version</em> : Display the installed version of beautiful-docs </li></ul>
+<p>Default output dir is <em>./out</em>.<br>You can specify the path to a directory containing markdown files (*.md) instead of a manifest file.
+
+</p>
+<a name="mutliple-manifests"></a><h2>Mutliple manifests</h2>
+<p>Beautiful docs can handle multiple manifests at once and generate and index file to
+easily access each of them.
+
+</p>
+<pre><code>bfdocs [options] [--manifests-only] /path/to/first/manifest.json /path/to/second/manifest.json /path/to/third/manifest.json [/path/to/output/dir]</code></pre>
+<p>If you have more than one manifest and you don&apos;t want to specify the output dir, you must use the <em>--manifests-only</em> option.
+
+</p>
+<p>When multiple manifests are specified, each generated ones will be located in its own subfolder.
+
+</p>
+<p>You can also generate the index file on its own using <em>--index-only</em>:
+
+</p>
+<pre><code>bfdocs --index-only /path/to/manifest.json /path/to/manifest.json index.html</code></pre>
+<a name="styling"></a><h2>Styling</h2>
+<p>You can use the following css classes to style your documentation (suround a block with a div tag):
+
+</p>
+<ul><li><em>note</em>: grey box</li><li><em>warning</em>: orange box</li><li><em>tip</em>: green box </li></ul>
+<p>Tables will be automatically formated.
+</p>
+</div>
+        <footer id="footer">
+            Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
+            <a href="#top">Back to top</a> - <a href="/_all.html?print=1">Print</a>
+        </footer>
+    </div>
+</body>
+</html>
