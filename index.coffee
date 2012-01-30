@@ -5,6 +5,8 @@ async = require 'async'
 fs = require 'fs'
 path = require 'path'
 
+exports.version = '1.0.0'
+
 exports.Manifest = Manifest
 exports.Generator = Generator
 
@@ -59,10 +61,6 @@ exports.serveStaticDir = (dir, port=8080) ->
     express = require 'express'
     app = express.createServer()
     app.configure =>
-        app.use express.logger()
         app.use express.static(dir)
-    app.configure 'development', =>
         app.use express.errorHandler({ dumpExceptions: true, showStack: true })
-    app.configure 'production', =>
-        app.use express.errorHandler()
     app.listen port

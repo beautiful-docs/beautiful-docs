@@ -62,24 +62,19 @@ class Generator
     # filename      - The filename of the generated file
     # callback      - A function that will be called once the file is created
     generateIndex: (title, manifests, filename, callback=null) ->
-        @mkdir path.dirname(filename), (err) =>
+        categories = {}
+        for m in manifests
+            name = m.category || 'All Projects'
+            if not categories[name]
+                categories[name] = []
+            categories[name].push m
+        
+        vars = title: title, categories: categories
+        @render @options.templates.index, vars, (err, content) ->
             if err
                 callback(err) if callback
                 return
-
-            categories = {}
-            for m in manifests
-                name = m.category || 'All Projects'
-                if not categories[name]
-                    categories[name] = []
-                categories[name].push m
-            
-            vars = title: title, categories: categories
-            @render @options.templates.index, vars, (err, content) ->
-                if err
-                    callback(err) if callback
-                    return
-                fs.writeFile filename, content, callback
+            fs.writeFile filename, content, callback
     
     # Public: Generates all html files associated to a manifest. Also copies
     # relative assets references in the manifest files

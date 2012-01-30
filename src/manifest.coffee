@@ -1,10 +1,6 @@
-events = require 'events'
 fs = require 'fs'
 path = require 'path'
 url = require 'url'
-http = require 'http'
-https = require 'https'
-crypto = require 'crypto'
 marked = require 'marked'
 async = require 'async'
 _ = require 'underscore'
@@ -25,52 +21,16 @@ generateSlug = (str) ->
 # filename : Extracts only the name (without the extension) of a file
 extractNameFromUri = (filename) ->
     path.basename(filename, path.extname(filename))
-
-# Returns whether the uri representes a local file
-#
-# uri : A string representing an URI (local file or starting with http(s)://)
-isLocalFile = (uri) -> not uri.match /^https?:\/\//
-
-# Reads a file
-#
-# uri       : A string representing an URI (local file or starting with http(s)://)
-# callback  : A function that will be called with the file's content
-readUri = (uri, callback) ->
-    if not isLocalFile(uri)
-        urlInfo = url.parse uri
-        
-        options = 
-            host: urlInfo.hostname
-            port: urlInfo.port || if urlInfo.protocol == 'http:' then 80 else 443
-            path: urlInfo.path
-            method: 'GET'
-             
-        responseHandler = (res) ->
-            res.on 'data', (chunk) -> callback null, chunk.toString()
-            res.on 'error', (err) -> callback err
-        
-        if urlInfo.protocol == 'https:'
-            request = https.request options, responseHandler
-        else
-            request = http.request options, responseHandler
-        request.end()
-    else
-        fs.readFile uri, (err, data) ->
-            callback err, data.toString()
                 
 # Makes the uri relative to another one
 #
 # uri        : A string representing an URI
 # relativeTo : The URI to make the first parameter relative to
 makeUriRelativeTo = (uri, relativeTo) ->
-    if not isLocalFile(uri) or uri.substr(0, 1) == '/'
+    if uri.substr(0, 1) == '/'
         uri
-    else if not isLocalFile(relativeTo)
-        urlInfo = url.parse relativeTo
-        urlInfo.pathname = path.join path.dirname(urlInfo.pathname), uri
-        url.format urlInfo
     else
-        path.join path.dirname(relativeTo), uri
+        path.join relativeTo, uri
 
 
 # Represents a file from a manifest
@@ -94,11 +54,11 @@ class ManifestFile
     #
     # callback : A function that will be called once done
     refresh: (callback=null) ->
-        readUri @uri, (err, data) =>
+        fs.readFile @uri, (err, data) =>
             if err
                 callback(err) if callback
                 return
-            @raw = data
+            @raw = data.toString()
             @render()
             callback null
 
@@ -106,7 +66,7 @@ class ManifestFile
     #
     # uri   : A string
     makeRelativeUri: (uri) ->
-        makeUriRelativeTo uri, @uri
+        makeUriRelativeTo uri, path.dirname(@uri)
 
     # Private: Transforms markdown files to html, extracting
     # urls of relative image and adding anchor tags before all <h> tags
@@ -117,7 +77,7 @@ class ManifestFile
         imgs = html.match /<img[^>]*>/gi
         for img in imgs || []
             src = img.match /src=("|')([^"']+)\1/i
-            if src and isLocalFile(src[2])
+            if src and not src[2].match /^https?:\/\//
                 @assets.push src[2]
 
         hTags = html.match /<h([1-6])>.+<\/h\1>/gi
@@ -139,29 +99,27 @@ class Manifest
     # uri       : The URI of a JSON-encoded file with the options
     # callback  : A function that will be called with the Manifest object
     @load: (uri, callback) ->
-        if uri.match /^github:/
-            uri = "https://raw.github.com/" + uri.substr(7) + "/master/docs/manifest.json"
-
-        readUri uri, (err, data) =>
-            return callback(err) if err
-            options = JSON.parse(data)
-            m = new Manifest(options, uri)
-            files = options.files || []
-            files.unshift options.home if options.home
-            m.addFiles files, (err) => callback err, m
+        m = new Manifest({}, uri)
+        m.refresh (err) -> callback err, m
 
     # Public: Constructor
     #
     # options   : An object with the manifest's options
     # uri       : The URI of the manifest
-    constructor: (options, @uri='.') -> 
-        @title = options.title || ''
-        @slug = generateSlug @title
-        @category = options.category || null
-        @ignoreFirstFileForToc = options.home?
-        @maxTocLevel = options.max_toc_level || 2
-        @options = _.extend({}, options)
+    constructor: (options={}, @uri=null) -> 
         @files = []
+        @setOptions options
+
+    # Public: Sets the options
+    #
+    # options   : An object with the manifest's options
+    setOptions: (options) ->
+        @title = options.title ? ''
+        @slug = generateSlug @title
+        @category = options.category ? null
+        @ignoreFirstFileForToc = options.home?
+        @maxTocLevel = options.maxToLevel ? 2
+        @options = _.extend({}, options)
         
     # Public: Adds files
     # The table of content will be rebuild
@@ -214,10 +172,28 @@ class Manifest
                 scope = entry.childs
                 currentLevel = level
 
-    # Public: Refreshes all files and rebuilds the table of content
+    # Public: Refreshes the manifest options and all files and rebuilds the table of content
     #
     # callback : A function that will be called once done
     refresh: (callback=null) ->
+        if @uri
+            fs.readFile @uri, (err, data) =>
+                return callback(err) if err
+                options = JSON.parse(data.toString())
+                files = options.files ? []
+                files.unshift options.home if options.home
+                @files = []
+                @setOptions options
+                @addFiles files, (err) =>
+                    return callback(err) if err
+                    @refreshFiles callback
+        else
+            @refreshFiles callback
+
+    # Public: Refreshes all files and rebuilds the table of content
+    #
+    # callback : A function that will be called once done
+    refreshFiles: (callback=null) ->
         async.forEach @files, ((f, cb) -> f.refresh cb), (err) =>
             if err
                 callback(err) if err
@@ -229,17 +205,16 @@ class Manifest
     #
     # uri : A string representing an URI
     makeRelativeUri: (uri) ->
-        makeUriRelativeTo uri, @uri
+        return uri if not @uri
+        makeUriRelativeTo uri, path.dirname(@uri)
     
     # Watches all the associated files for changes
     #
     # callback : A function that will be called whenever a files changes
     watch: (callback) ->
-        return if not isLocalFile(@uri)
-        for f in @files
-            fs.watchFile f.uri, (curr, prev) => 
-                if curr.mtime > prev.mtime
-                    @refresh (err) -> callback(err)
+        watcher = (curr, prev) => @refresh callback if curr.mtime > prev.mtime
+        fs.watchFile @uri, watcher if @uri
+        fs.watchFile f.uri, watcher for f in @files
 
             
 module.exports = Manifest
