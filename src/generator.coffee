@@ -112,7 +112,7 @@ class Generator
             content = "<div id='content'>#{allContent}</div>"
             render @options.templates.layout, {content: content}, (err, content) ->
                 return cb(err) if err
-                fs.writeFile path.join(destDir, '_all.html'), content, cb
+                fs.writeFile path.join(destDir, 'all.html'), content, cb
 
         async.series([
             ((cb) => @mkdir destDir, cb),
