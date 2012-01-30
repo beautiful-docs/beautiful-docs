@@ -14,9 +14,8 @@ Features:
  - Easy to customize (eg.: for organizations)
  - Support for multiple manifests with an index page
 
-Checkout [beautifuldocs.com](http://beautifuldocs.com) for an example.
-
-![Example of generated documentation](https://github.com/maximebf/beautiful-docs/raw/master/docs/screenshot.png)
+Checkout [beautifuldocs.com](http://beautifuldocs.com) for an example or [github](https://github.com/maximebf/beautiful-docs) for the sources.  
+You can find a screenshot of the generated doc [here](https://github.com/maximebf/beautiful-docs/raw/master/docs/screenshot.png).
 
 Requires a recent build of nodejs (tested on 0.6.7).  
 Install using npm:
