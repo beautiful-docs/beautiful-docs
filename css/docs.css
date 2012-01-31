@@ -126,6 +126,7 @@ body {
 }
 #content pre {
   margin: 15px 0;
+  overflow: auto;
 }
 #content .note {
   background: #f3f3f3;
