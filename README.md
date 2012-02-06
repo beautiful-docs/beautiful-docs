@@ -34,6 +34,7 @@ A manifest file contains a JSON object with the following properties:
  - *css*: An absolute URL to a CSS stylesheet that will be included in the page
  - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
+ - *github*: Repository name on github (user/repo) used to display a "Fork me on Github" banner
 
 Files can be absolute URIs or relative to the manifest file.  
 Example:
@@ -55,6 +56,8 @@ Available options:
  - *--watch* : Watch files for modifications and reload them automatically
  - *--manifests-only* : Do not treat the last argument as the output dir but also as a manifest
  - *--title* : Title of the index page
+ - *--no-header*: Hides the header
+ - *--no-toc*: Hides the table of content sidebar
  - *--base-url* : Base url of all links
  - *--index-only* : Only generate the index file. The last argument should be the filename of the index
  - *--version* : Display the installed version of beautiful-docs
