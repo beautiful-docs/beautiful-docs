@@ -22,30 +22,32 @@
                 <h1><a href="/">Beautiful docs</a></h1>
             </header>
         
-        <div id="sidebar">
-    <nav id="toc">
-        <ol>
-            
-                <li>
-                    <a href="/readme.html">Beautiful docs</a>
-                    
-                        <ol>
-                            
-                                <li><a href="/readme.html#manifests">Manifests</a></li>
-                            
-                                <li><a href="/readme.html#usage">Usage</a></li>
-                            
-                                <li><a href="/readme.html#mutliple-manifests">Mutliple manifests</a></li>
-                            
-                                <li><a href="/readme.html#styling">Styling</a></li>
-                            
-                        </ol>
-                    
-                </li>
-            
-        </ol>
-    </nav>
-</div>
+        
+    <div id="sidebar">
+        <nav id="toc">
+            <ol>
+                
+                    <li>
+                        <a href="/readme.html#beautiful-docs">Beautiful docs</a>
+                        
+                            <ol>
+                                
+                                    <li><a href="/readme.html#manifests">Manifests</a></li>
+                                
+                                    <li><a href="/readme.html#usage">Usage</a></li>
+                                
+                                    <li><a href="/readme.html#mutliple-manifests">Mutliple manifests</a></li>
+                                
+                                    <li><a href="/readme.html#styling">Styling</a></li>
+                                
+                            </ol>
+                        
+                    </li>
+                
+            </ol>
+        </nav>
+    </div>
+
 <article id="content">
     <a name="beautiful-docs"></a><h1>Beautiful docs</h1>
 <p>Beautiful docs is a documentation viewer based on markdown files.<br>Documentation manuals can be described in a manifest file using JSON.
@@ -66,7 +68,7 @@
 <p>Manifests are not mandatory but they allow to specify custom options for your documentation.<br>A manifest file contains a JSON object with the following properties:
 
 </p>
-<ul><li><em>title</em>: Title of the manual (optional, default &quot;Documentation&quot;)</li><li><em>files</em>: An array of files</li><li><em>home</em>: The file to display as the manual homepage (won&apos;t be used when computing the TOC)</li><li><em>category</em>: Category of the manual (used on the homepage) (optional, default none)</li><li><em>css</em>: An absolute URL to a CSS stylesheet that will be included in the page</li><li><em>codeHighlightTheme</em>: The highlightjs theme for code highlighting (<a href="http://softwaremaniacs.org/soft/highlight/en/">http://softwaremaniacs.org/soft/highlight/en/</a>)</li><li><em>embedly</em>: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph. </li></ul>
+<ul><li><em>title</em>: Title of the manual (optional, default &quot;Documentation&quot;)</li><li><em>files</em>: An array of files</li><li><em>home</em>: The file to display as the manual homepage (won&apos;t be used when computing the TOC)</li><li><em>category</em>: Category of the manual (used on the homepage) (optional, default none)</li><li><em>css</em>: An absolute URL to a CSS stylesheet that will be included in the page</li><li><em>codeHighlightTheme</em>: The highlightjs theme for code highlighting (<a href="http://softwaremaniacs.org/soft/highlight/en/">http://softwaremaniacs.org/soft/highlight/en/</a>)</li><li><em>embedly</em>: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.</li><li><em>github</em>: Repository name on github (user/repo) used to display a &quot;Fork me on Github&quot; banner </li></ul>
 <p>Files can be absolute URIs or relative to the manifest file.<br>Example:
 
 </p>
@@ -79,7 +81,7 @@
 <p>Available options:
 
 </p>
-<ul><li><em>--help</em> : Display the help information</li><li><em>--server</em> : Create an HTTP server to access the generated documentation</li><li><em>--port</em> : The port on which the HTTP server shoud listen</li><li><em>--watch</em> : Watch files for modifications and reload them automatically</li><li><em>--manifests-only</em> : Do not treat the last argument as the output dir but also as a manifest</li><li><em>--title</em> : Title of the index page</li><li><em>--base-url</em> : Base url of all links</li><li><em>--index-only</em> : Only generate the index file. The last argument should be the filename of the index</li><li><em>--version</em> : Display the installed version of beautiful-docs </li></ul>
+<ul><li><em>--help</em> : Display the help information</li><li><em>--server</em> : Create an HTTP server to access the generated documentation</li><li><em>--port</em> : The port on which the HTTP server shoud listen</li><li><em>--watch</em> : Watch files for modifications and reload them automatically</li><li><em>--manifests-only</em> : Do not treat the last argument as the output dir but also as a manifest</li><li><em>--title</em> : Title of the index page</li><li><em>--no-header</em>: Hides the header</li><li><em>--no-toc</em>: Hides the table of content sidebar</li><li><em>--base-url</em> : Base url of all links</li><li><em>--index-only</em> : Only generate the index file. The last argument should be the filename of the index</li><li><em>--version</em> : Display the installed version of beautiful-docs </li></ul>
 <p>Default output dir is <em>./out</em>.<br>You can specify the path to a directory containing markdown files (*.md) instead of a manifest file.
 
 </p>
@@ -112,6 +114,9 @@ easily access each of them.
             Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
             <a href="#top">Back to top</a> - <a href="/all.html">Everything on a single page</a>
             - <a href="?print=1">Print current page</a> - <a href="/all.html?print=1">Print all pages</a>
+            
+                <a href="https://github.com/maximebf/beautiful-docs" id="fork-me-on-github">Fork me on Github</a>
+            
         </footer>
     </div>
 </body>

@@ -126,6 +126,8 @@ body {
 }
 #content pre {
   margin: 15px 0;
+}
+#content code {
   overflow: auto;
 }
 #content .note {
@@ -177,4 +179,14 @@ body {
 }
 #footer a {
   color: #999;
+}
+#fork-me-on-github {
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 149px;
+  height: 149px;
+  text-indent: -9999px;
+  background: url(../img/github_forkme.png) no-repeat;
 }
