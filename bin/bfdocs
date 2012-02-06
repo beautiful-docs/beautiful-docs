@@ -16,6 +16,8 @@ switches =
     watch: ['--watch', 'Watch files for modifications and reload them automatically']
     manifestsOnly: ['--manifests-only', 'Do not treat the last argument as the output dir but also as a manifest']
     title: ['--title', 'Title of the index page']
+    noHeader: ['--no-header', 'Hides the header']
+    noToc: ['--no-toc', 'Hides the table of content sidebar']
     baseUrl: ['--base-url', 'Base url of all links']
     indexOnly: ['--index-only', 'Only generate the index file. The last argument should be the filename of the index']
     version: ['--version', 'Display the installed version of beautiful-docs']
@@ -29,7 +31,8 @@ options =
     manifestsOnly: false
     title: 'Beautiful Docs'
     baseUrl: ''
-    displayHeader: true
+    noHeader: false
+    noToc: false
     indexOnly: false
     version: false
 

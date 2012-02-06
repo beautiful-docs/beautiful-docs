@@ -17,7 +17,8 @@ class Generator
             templatesDir: path.join(__dirname, "templates")
             templates: {layout: 'layout.html', page: 'page.html', index: 'index.html'}
             baseUrl: ''
-            displayHeader: true
+            noHeader: false,
+            noToc: false
         }, options)
 
     # Public: Renders a template "filename" located in options.templatesDir

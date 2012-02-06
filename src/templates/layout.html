@@ -29,7 +29,7 @@
 <body>
     <div id="page">
         <a name="top" />
-        <% if @displayHeader: %>
+        <% if not @noHeader: %>
             <header id="header">
                 <h1><a href="<%= @baseUrl %>/"><%= @manifest.title %></a></h1>
             </header>
@@ -39,6 +39,9 @@
             Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
             <a href="#top">Back to top</a> - <a href="<%= @baseUrl %>/all.html">Everything on a single page</a>
             - <a href="?print=1">Print current page</a> - <a href="<%= @baseUrl %>/all.html?print=1">Print all pages</a>
+            <% if @manifest.options.github: %>
+                <a href="https://github.com/<%= @manifest.options.github %>" id="fork-me-on-github">Fork me on Github</a>
+            <% end %>
         </footer>
     </div>
 </body>
