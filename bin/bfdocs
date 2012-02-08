@@ -106,7 +106,8 @@ handleManifest = (err, manifest) ->
                 console.log "Changes detected to '#{manifest.uri}'"
                 generateManifest manifest, (err) ->
                     return if err
-                    generateIndex indexFilename
+                    if argv.length > 1
+                        generateIndex indexFilename
         if --lock == 0
             if argv.length > 1
                 generateIndex indexFilename, startServer
