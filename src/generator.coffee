@@ -21,6 +21,10 @@ class Generator
             noToc: false
         }, options)
 
+        url = @options.baseUrl
+        l = url.length
+        @options.baseUrl += '/' if l > 0 and url[l-l] isnt '/'
+
     # Public: Renders a template "filename" located in options.templatesDir
     #
     # filename  - Filename of the template
@@ -39,7 +43,7 @@ class Generator
     mkdir: (dir, callback) ->
         path.exists dir, (exists) =>
             return callback(null) if exists
-            @mkdir path.dirname(dir), (err) -> 
+            @mkdir path.dirname(dir), (err) ->
                 return callback(err) if err
                 fs.mkdir dir, callback
 
@@ -54,7 +58,7 @@ class Generator
             ins = fs.createReadStream src
             outs = fs.createWriteStream dest
             util.pump ins, outs, callback
-    
+
     # Public: Generates an index file containing a list of all manifests
     # ordered by category. Default category is "All Projects"
     #
@@ -69,14 +73,14 @@ class Generator
             if not categories[name]
                 categories[name] = []
             categories[name].push m
-        
+
         vars = title: title, categories: categories
         @render @options.templates.index, vars, (err, content) ->
             if err
                 callback(err) if callback
                 return
             fs.writeFile filename, content, callback
-    
+
     # Public: Generates all html files associated to a manifest. Also copies
     # relative assets references in the manifest files
     #
@@ -155,7 +159,7 @@ class Generator
                     @copyAssets path.join(destDir, filename), pathname, compileLessOrCoffee, cb
                 else
                     copyFile pathname, filename, cb
-        
+
         handleFiles = (err, files, cb) =>
             return cb(err) if err
             async.forEach files, handleFile, cb

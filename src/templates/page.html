@@ -4,11 +4,11 @@
             <ol>
                 <% for entry in @manifest.tableOfContent: %>
                     <li>
-                        <a href="<%= @baseUrl %>/<%- entry.slug %>.html#<%= entry.anchor %>"><%= entry.title %></a>
+                        <a href="<%= @baseUrl %><%- entry.slug %>.html#<%= entry.anchor %>"><%= entry.title %></a>
                         <% if entry.childs: %>
                             <ol>
                                 <% for child in entry.childs: %>
-                                    <li><a href="<%= @baseUrl %>/<%- child.slug %>.html#<%= child.anchor %>"><%= child.title %></a></li>
+                                    <li><a href="<%= @baseUrl %><%- child.slug %>.html#<%= child.anchor %>"><%= child.title %></a></li>
                                 <% end %>
                             </ol>
                         <% end %>
