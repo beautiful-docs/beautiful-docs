@@ -65,7 +65,7 @@ Available options:
 Default output dir is *./out*.  
 You can specify the path to a directory containing markdown files (\*.md) instead of a manifest file.
 
-## Mutliple manifests
+## Multiple manifests
 
 Beautiful docs can handle multiple manifests at once and generate and index file to
 easily access each of them.
