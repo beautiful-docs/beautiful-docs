@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title><%= @manifest.title %></title>
+    <% if @manifest.options.css: %>
+        <link type="text/css" rel="stylesheet" href="<%- @manifest.options.css %>">
+    <% end %>
+</head>
+
+<body>
+
+    <% if not @noHeader: %>
+        <header>
+            <h1><a href="<%= @baseUrl %>"><%= @manifest.title %></a></h1>
+        </header>
+    <% end %>
+
+    <%- @content %>
+
+    <footer>
+        <a href="<%= @baseUrl %>/all.html">Everything on a single page</a>
+        <% if @manifest.options.github: %>
+             - <a href="https://github.com/<%= @manifest.options.github %>" id="fork-me-on-github">Fork me on Github</a>
+        <% end %>
+    </footer>
+
+</body>
+
+</html>
