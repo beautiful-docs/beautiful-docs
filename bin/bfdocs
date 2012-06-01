@@ -21,6 +21,7 @@ switches =
     baseUrl: ['--base-url', 'Base url of all links']
     indexOnly: ['--index-only', 'Only generate the index file. The last argument should be the filename of the index']
     version: ['--version', 'Display the installed version of beautiful-docs']
+    templatesDir: ['--templates-dir', 'Directory of custom templates']
 
 argv = []
 options =
