@@ -60,6 +60,7 @@ Available options:
  - *--no-toc*: Hides the table of content sidebar
  - *--base-url* : Base url of all links
  - *--index-only* : Only generate the index file. The last argument should be the filename of the index
+ - *--templates-dir* : Path of custom templates for the pages. [Examples of templates](https://github.com/maximebf/beautiful-docs/tree/master/src/templates).
  - *--version* : Display the installed version of beautiful-docs
 
 Default output dir is *./out*.  

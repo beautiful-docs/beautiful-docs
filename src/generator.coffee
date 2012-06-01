@@ -14,7 +14,7 @@ class Generator
     constructor: (options) ->
         @options = _.extend({
             assetsDir: path.join(__dirname, "assets")
-            templatesDir: path.join(__dirname, "templates")
+            templatesDir: path.join(__dirname, "templates/beautiful-docs")
             templates: {layout: 'layout.html', page: 'page.html', index: 'index.html'}
             baseUrl: ''
             noHeader: false,

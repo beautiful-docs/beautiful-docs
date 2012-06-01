@@ -37,10 +37,15 @@ exports.createManifestFromDir = (dir, callback) ->
 # callback : A function that will be called once all files are generated
 exports.generate = (manifest, destDir, options={}, callback=null) ->
     g = new Generator(options)
-    async.series([
-        ((cb) -> g.generate manifest, destDir, cb),
-        ((cb) -> g.copyAssets destDir, cb)
-    ], (err) -> callback(err) if callback)
+    if options.templatesDir
+        async.series([
+            ((cb) -> g.generate manifest, destDir, cb)
+        ], (err) -> callback(err) if callback)
+    else 
+        async.series([
+            ((cb) -> g.generate manifest, destDir, cb),
+            ((cb) -> g.copyAssets destDir, cb)
+        ], (err) -> callback(err) if callback)
 
 # Generates an index file for multiple manifests
 #
