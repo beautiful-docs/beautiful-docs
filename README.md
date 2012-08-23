@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/maximebf/beautiful-docs.png)](http://travis-ci.org/maximebf/beautiful-docs)
 # Beautiful docs
 
 Beautiful docs is a documentation viewer based on markdown files.  
