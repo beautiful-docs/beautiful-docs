@@ -127,7 +127,7 @@ loadManifests = ->
 if options.indexOnly
     loadManifests()
 else
-    path.exists destDir, (exists) ->
+    fs.exists destDir, (exists) ->
         if not exists
             fs.mkdir destDir, (err) ->
                 return console.log("An error occured while creating '#{destDir}': #{err}") if err
