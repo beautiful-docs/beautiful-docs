@@ -1,0 +1,130 @@
+bfdocs = require '..'
+fs = require 'fs'
+path = require 'path'
+_ = require 'underscore'
+
+switches =
+    help: ['--help', 'Display the help information']
+    server: ['--server', 'Create an HTTP server to access the generated documentation']
+    port: ['--port', 'The port on which the HTTP server shoud listen']
+    watch: ['--watch', 'Watch files for modifications and reload them automatically']
+    manifestsOnly: ['--manifests-only', 'Do not treat the last argument as the output dir but also as a manifest']
+    title: ['--title', 'Title of the index page']
+    noHeader: ['--no-header', 'Hides the header']
+    noToc: ['--no-toc', 'Hides the table of content sidebar']
+    baseUrl: ['--base-url', 'Base url of all links']
+    indexOnly: ['--index-only', 'Only generate the index file. The last argument should be the filename of the index']
+    version: ['--version', 'Display the installed version of beautiful-docs']
+    templatesDir: ['--templates-dir', 'Directory of custom templates']
+
+argv = []
+options =
+    help: false
+    server: false
+    port: 8080
+    watch: false
+    manifestsOnly: false
+    title: 'Beautiful Docs'
+    baseUrl: ''
+    noHeader: false
+    noToc: false
+    indexOnly: false
+    version: false
+
+for arg in process.argv.slice(2)
+    if arg.substr(0, 2) == '--'
+        parts = arg.split '='
+        v = parts[1] || true
+        v = false if v == 'false'
+        _.forEach switches, (sw, name) -> options[name] = v if sw[0] == parts[0]
+    else
+        argv.push arg
+
+if options.help
+    console.log "Usage: bfdocs [options] [/path/to/manifest.json] [/path/to/output/dir]\n"
+    console.log "Available options:"
+    _.forEach switches, (sw) -> console.log "  #{sw[0]}\t\t\t#{sw[1]}"
+    process.exit 0
+
+if options.version
+    console.log bfdocs.version
+    process.exit 0
+
+destDir = if options.indexOnly then './index.html' else './out'
+if argv.length == 0
+    argv.push '.'
+else if argv.length > 1 and not options.manifestsOnly
+    destDir = _.last(argv)
+    argv = _.initial(argv)
+
+lock = argv.length
+manifests = []
+
+generateManifest = (manifest, callback=null) ->
+    dest = destDir
+    opts = _.extend({}, options)
+    if argv.length > 1
+        dest = path.join destDir, manifest.slug
+        _.extend opts, {baseUrl: options.baseUrl + '/' + manifest.slug}
+    bfdocs.generate manifest, dest, opts, callback
+
+generateIndex = (filename, callback=null) ->
+    bfdocs.generateIndex options.title || 'Beautiful docs', 
+        manifests, filename, options, callback
+
+startServer = (err) ->
+    if options.server
+        console.log "Starting server on port #{options.port}"
+        bfdocs.serveStaticDir destDir, options.port
+    else if options.watch
+        console.log "Press Ctrl+C to quit"
+        setInterval (-> 1), 100
+
+handleManifest = (err, manifest) ->
+    if err
+        console.log "An error occured while opening a manifest: #{err}"
+        return
+    manifests.push manifest
+
+    if options.indexOnly
+        generateIndex(destDir) if --lock == 0
+        return
+    
+    indexFilename = path.join(destDir, 'index.html')
+    generateManifest manifest, (err) ->
+        if err
+            lock--
+            console.log "An error occured while generating a manifest: #{err}"
+            return
+        if options.watch
+            manifest.watch -> 
+                console.log "Changes detected to '#{manifest.uri}'"
+                generateManifest manifest, (err) ->
+                    return if err
+                    if argv.length > 1
+                        generateIndex indexFilename
+        if --lock == 0
+            if argv.length > 1
+                generateIndex indexFilename, startServer
+            else
+                startServer()
+
+loadManifests = ->
+    for filename in argv
+        if fs.statSync(filename).isDirectory()
+            console.log "Generating documentation from directory '#{filename}'"
+            bfdocs.createManifestFromDir filename, handleManifest
+        else
+            console.log "Generating documentation from manifest '#{filename}'"
+            bfdocs.open filename, handleManifest
+
+if options.indexOnly
+    loadManifests()
+else
+    fs.exists destDir, (exists) ->
+        if not exists
+            fs.mkdir destDir, (err) ->
+                return console.log("An error occured while creating '#{destDir}': #{err}") if err
+                loadManifests()
+        else
+            loadManifests()

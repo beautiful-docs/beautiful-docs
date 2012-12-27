@@ -41,7 +41,7 @@ class Generator
     # dir       - Directory to create
     # callback  - A function that will be called once the path is created
     mkdir: (dir, callback) ->
-        path.exists dir, (exists) =>
+        fs.exists dir, (exists) =>
             return callback(null) if exists
             @mkdir path.dirname(dir), (err) ->
                 return callback(err) if err

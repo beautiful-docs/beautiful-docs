@@ -1,6 +1,6 @@
 
-Manifest = require './src/manifest'
-Generator = require './src/generator'
+Manifest = require './manifest'
+Generator = require './generator'
 async = require 'async'
 fs = require 'fs'
 path = require 'path'
@@ -64,7 +64,7 @@ exports.generateIndex = (title, manifests, filename, options={}, callback=null) 
 # port : The port on which the server should listen to, default: 8080
 exports.serveStaticDir = (dir, port=8080) ->
     express = require 'express'
-    app = express.createServer()
+    app = express()
     app.configure =>
         app.use express.static(dir)
         app.use express.errorHandler({ dumpExceptions: true, showStack: true })
