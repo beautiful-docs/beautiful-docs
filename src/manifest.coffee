@@ -130,7 +130,7 @@ class Manifest
         @slug = generateSlug @title
         @category = options.category ? null
         @ignoreFirstFileForToc = options.home?
-        @maxTocLevel = options.maxToLevel ? 2
+        @maxTocLevel = options.maxTocLevel ? 2
         @options = _.extend({}, options)
         
     # Public: Adds files

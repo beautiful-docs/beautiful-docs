@@ -34,6 +34,7 @@ A manifest file contains a JSON object with the following properties:
  - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
  - *github*: Repository name on github (user/repo) used to display a "Fork me on Github" banner
+ - *maxTocLevel*: Maximum number of levels to display in the table of content (default 2)
 
 Files can be absolute URIs or relative to the manifest file.  
 Example:
