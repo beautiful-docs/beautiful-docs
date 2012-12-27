@@ -16,6 +16,18 @@ generateSlug = (str) ->
     str = str.replace /[-]+/g, "-"
     str = str.replace /^-+|-+$/g, ""
 
+# Cleans an HTML string of unwanted tags
+# From: http://phpjs.org/functions/strip_tags/
+#
+# input: Input string
+# allowed: Allowed tags in the form <tagname) (eg: <i><a>)
+cleanHtmlString = (input, allowed) ->
+  allowed = (((allowed || "") + "").toLowerCase().match(/<[a-z][a-z0-9]*>/g) || []).join('');
+  tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
+  comments = /<!--[\s\S]*?-->/gi;
+  input.replace(comments, '').replace tags, ($0, $1) -> 
+    if allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 then $0 else ''
+
 # Extracts the name of the file without the extension
 #
 # filename : Extracts only the name (without the extension) of a file
@@ -153,7 +165,7 @@ class Manifest
             hTags = file.content.match /<h([1-6])>.+<\/h\1>/gi
             for hTag in hTags || []
                 level = parseInt hTag.substr(2, 1)
-                title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
+                title = cleanHtmlString hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
                 anchor = generateSlug title
                 
                 if level > @maxTocLevel then continue
