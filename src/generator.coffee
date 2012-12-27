@@ -93,9 +93,6 @@ class Generator
         render = (filename, vars, callback) =>
             @render filename, _.extend({manifest: manifest}, vars), callback
 
-        copyAsset = (filename, cb) =>
-            @copy file.makeRelativeUri(a), path.join(destDir, a), cb
-
         renderFile = (file, filename, cb) =>
             copyAsset = (a, c) => @copy file.makeRelativeUri(a), path.join(destDir, a), c
             render @options.templates.page, {content: file.content}, (err, content) =>

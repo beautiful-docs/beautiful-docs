@@ -35,6 +35,7 @@ A manifest file contains a JSON object with the following properties:
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
  - *github*: Repository name on github (user/repo) used to display a "Fork me on Github" banner
  - *maxTocLevel*: Maximum number of levels to display in the table of content (default 2)
+ - *makeAssetsRelativeToGithub*: set this option to a github repo name (ie. username/reponame) to make assets urls relative to this repo
 
 Files can be absolute URIs or relative to the manifest file.  
 Example:

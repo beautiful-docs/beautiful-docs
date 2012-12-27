@@ -49,17 +49,20 @@ makeUriRelativeTo = (uri, relativeTo) ->
 class ManifestFile
     # Public: Creates a ManifestFile object from the specified uri
     #
-    # uri       : Location of the file
-    # callback  : A function that will be called with the ManifestFile object
-    @load: (uri, callback) ->
-        f = new ManifestFile(uri)
+    # manifest : Manifest to which this file belongs
+    # uri      : Location of the file
+    # callback : A function that will be called with the ManifestFile object
+    @load: (manifest, uri, callback) ->
+        f = new ManifestFile(manifest, uri)
         f.refresh (err) -> callback err, f
 
     # Private: Creates a ManifestFile object
     #
-    # uri   : URI of the file
-    # raw   : Content of the file
-    constructor: (@uri) ->
+    # manifest : Manifest to which this file belongs
+    # uri      : URI of the file
+    # raw      : Content of the file
+    constructor: (manifest, @uri) ->
+        @manifest = manifest
         @slug = generateSlug extractNameFromUri @uri
 
     # Public: Refreshes the content
@@ -89,8 +92,13 @@ class ManifestFile
         imgs = html.match /<img[^>]*>/gi
         for img in imgs || []
             src = img.match /src=("|')([^"']+)\1/i
-            if src and not src[2].match /^https?:\/\//
-                @assets.push src[2]
+            if src and not src[2].match /^(https?):\/\//
+                if not @manifest.options.makeAssetsRelativeToGithub
+                    @assets.push src[2]
+                else
+                    url = 'https://github.com/' + @manifest.options.makeAssetsRelativeToGithub + '/raw/master/' + src[2]
+                    new_img = img.replace src[2], url
+                    html = html.replace img, new_img
 
         hTags = html.match /<h([1-6])>.+<\/h\1>/gi
         for hTag in hTags || []
@@ -131,6 +139,7 @@ class Manifest
         @category = options.category ? null
         @ignoreFirstFileForToc = options.home?
         @maxTocLevel = options.maxTocLevel ? 2
+        @makeAssetsRelativeToGithub = options.makeAssetsRelativeToGithub ? false
         @options = _.extend({}, options)
         
     # Public: Adds files
@@ -144,7 +153,7 @@ class Manifest
         for i in [0...files.length]
             do =>
                 j = d + i
-                ManifestFile.load @makeRelativeUri(files[i]), (err, f) =>
+                ManifestFile.load this, @makeRelativeUri(files[i]), (err, f) =>
                     if err 
                         lock = -1
                         callback(err) if callback
