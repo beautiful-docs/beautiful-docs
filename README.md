@@ -30,7 +30,7 @@ A manifest file contains a JSON object with the following properties:
  - *files*: An array of files
  - *home*: The file to display as the manual homepage (won't be used when computing the TOC)
  - *category*: Category of the manual (used on the homepage) (optional, default none)
- - *css*: An absolute URL to a CSS stylesheet that will be included in the page
+ - *css*: Filename or URL of a CSS stylesheet that will be included in the page
  - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
  - *github*: Repository name on github (user/repo) used to display a "Fork me on Github" banner

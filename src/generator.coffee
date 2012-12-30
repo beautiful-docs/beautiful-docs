@@ -116,11 +116,20 @@ class Generator
                 return cb(err) if err
                 fs.writeFile path.join(destDir, 'all.html'), content, cb
 
+        copyStylesheet = (cb) =>
+            return cb() if not manifest.options.css?
+            filename = manifest.options.css
+            if filename.substr(0, 1) != '/' and not filename.match /^(https?):\/\//
+                @copy manifest.makeRelativeUri(filename), path.join(destDir, filename), cb
+            else
+                cb()
+
         async.series([
             ((cb) => @mkdir destDir, cb),
             ((cb) -> renderFile manifest.files[0], 'index', cb),
-            ((cb) -> renderFiles cb),
-            ((cb) -> renderAll cb)
+            renderFiles,
+            renderAll,
+            copyStylesheet
         ], (err) -> callback(err) if callback)
 
     # Public: Copies all files from srcDir to destDir. Eventually transforms less and coffee files.
