@@ -57,7 +57,9 @@ class Generator
             return callback(err) if err
             ins = fs.createReadStream src
             outs = fs.createWriteStream dest
-            util.pump ins, outs, callback
+            stream = ins.pipe outs
+            stream.on 'end', callback
+            stream.on 'error', callback
 
     # Public: Generates an index file containing a list of all manifests
     # ordered by category. Default category is "All Projects"
