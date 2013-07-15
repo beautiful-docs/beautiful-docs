@@ -4,29 +4,7 @@ url = require 'url'
 marked = require 'marked'
 async = require 'async'
 _ = require 'underscore'
-
-# Transforms a string to an uri-compatible one
-#
-# str : The string to transform
-generateSlug = (str) ->
-    str = str.toLowerCase()
-    str = str.replace /^\s+|\s+$/g, ""
-    str = str.replace /[\/_|\s]+/g, "-"
-    str = str.replace /[^a-z0-9-]+/g, ""
-    str = str.replace /[-]+/g, "-"
-    str = str.replace /^-+|-+$/g, ""
-
-# Cleans an HTML string of unwanted tags
-# From: http://phpjs.org/functions/strip_tags/
-#
-# input: Input string
-# allowed: Allowed tags in the form <tagname) (eg: <i><a>)
-cleanHtmlString = (input, allowed) ->
-  allowed = (((allowed || "") + "").toLowerCase().match(/<[a-z][a-z0-9]*>/g) || []).join('');
-  tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
-  comments = /<!--[\s\S]*?-->/gi;
-  input.replace(comments, '').replace tags, ($0, $1) -> 
-    if allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 then $0 else ''
+S = require 'string'
 
 # Extracts the name of the file without the extension
 #
@@ -63,7 +41,7 @@ class ManifestFile
     # raw      : Content of the file
     constructor: (manifest, @uri) ->
         @manifest = manifest
-        @slug = generateSlug extractNameFromUri @uri
+        @slug = S(extractNameFromUri @uri).slugify().s
 
     # Public: Refreshes the content
     #
@@ -103,7 +81,7 @@ class ManifestFile
         hTags = html.match /<h([1-6])>.+<\/h\1>/gi
         for hTag in hTags || []
             title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
-            anchor = generateSlug title
+            anchor = S(title).slugify().s
             html = html.replace hTag, '<a name="' + anchor + '"></a>' + hTag
 
         @content = html
@@ -135,11 +113,12 @@ class Manifest
     # options   : An object with the manifest's options
     setOptions: (options) ->
         @title = options.title ? ''
-        @slug = generateSlug @title
+        @slug = S(@title).slugify().s
         @category = options.category ? null
         @ignoreFirstFileForToc = options.home?
         @maxTocLevel = options.maxTocLevel ? 2
         @makeAssetsRelativeToGithub = options.makeAssetsRelativeToGithub ? false
+        @rootDir = options.rootDir ? '.'
         @options = _.extend({}, options)
         
     # Public: Adds files
@@ -174,8 +153,8 @@ class Manifest
             hTags = file.content.match /<h([1-6])>.+<\/h\1>/gi
             for hTag in hTags || []
                 level = parseInt hTag.substr(2, 1)
-                title = cleanHtmlString hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
-                anchor = generateSlug title
+                title = S(hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')).stripTags().decodeHTMLEntities().s
+                anchor = S(title).slugify().s
                 
                 if level > @maxTocLevel then continue
                 if level <= currentLevel
@@ -227,7 +206,7 @@ class Manifest
     # uri : A string representing an URI
     makeRelativeUri: (uri) ->
         return uri if not @uri
-        makeUriRelativeTo uri, path.dirname(@uri)
+        makeUriRelativeTo makeUriRelativeTo(uri, @rootDir), path.dirname(@uri)
     
     # Watches all the associated files for changes
     #

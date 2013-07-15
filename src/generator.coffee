@@ -56,10 +56,11 @@ class Generator
         @mkdir path.dirname(dest), (err) ->
             return callback(err) if err
             ins = fs.createReadStream src
+            ins.on 'error', callback
             outs = fs.createWriteStream dest
-            stream = ins.pipe outs
-            stream.on 'end', callback
-            stream.on 'error', callback
+            outs.on 'error', callback
+            ins.on 'end', callback
+            ins.pipe outs
 
     # Public: Generates an index file containing a list of all manifests
     # ordered by category. Default category is "All Projects"

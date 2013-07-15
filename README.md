@@ -28,6 +28,7 @@ A manifest file contains a JSON object with the following properties:
 
  - *title*: Title of the manual (optional, default "Documentation")
  - *files*: An array of files
+ - *rootDir*: Root directory where files are located. Relative to the manifest pathname
  - *home*: The file to display as the manual homepage (won't be used when computing the TOC)
  - *category*: Category of the manual (used on the homepage) (optional, default none)
  - *css*: Filename or URL of a CSS stylesheet that will be included in the page

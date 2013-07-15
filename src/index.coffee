@@ -41,7 +41,7 @@ exports.generate = (manifest, destDir, options={}, callback=null) ->
         async.series([
             ((cb) -> g.generate manifest, destDir, cb)
         ], (err) -> callback(err) if callback)
-    else 
+    else
         async.series([
             ((cb) -> g.generate manifest, destDir, cb),
             ((cb) -> g.copyAssets destDir, cb)

@@ -1,5 +1,6 @@
 {
     "title": "Beautiful docs",
     "github": "maximebf/beautiful-docs",
-	"files": ["../README.md"]
+    "rootDir": "..",
+    "files": ["README.md"]
 }
