@@ -3,9 +3,9 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title><%= @manifest.title or @title %></title>
-    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>css/reset.css">
-    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>css/docs.css">
-    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>css/print.css" media="print">
+    <link type="text/css" rel="stylesheet" href="<%= @assetsUrl %>css/reset.css">
+    <link type="text/css" rel="stylesheet" href="<%= @assetsUrl %>css/docs.css">
+    <link type="text/css" rel="stylesheet" href="<%= @assetsUrl %>css/print.css" media="print">
     <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/<%= @manifest.options.codeHighlightTheme || 'sunburst' %>.min.css">
     <% if @manifest.options.css: %>
         <link type="text/css" rel="stylesheet" href="<%- @manifest.options.css %>">
@@ -23,16 +23,14 @@
             });
         </script>
     <% end %>
-    <script type="text/javascript" src="<%= @baseUrl %>js/viewer.js"></script>
+    <script type="text/javascript" src="<%= @assetsUrl %>js/viewer.js"></script>
 </head>
 <body>
     <div id="page">
         <a name="top" />
-        <% if not @noHeader: %>
-            <header id="header">
-                <h1><a href="<%= @baseUrl %>"><%= @manifest.title or @title %></a></h1>
-            </header>
-        <% end %>
+        <header id="header">
+            <h1><a href="<%= @baseUrl %>"><%= @manifest.title or @title %></a></h1>
+        </header>
         <%- @content %>
         <footer id="footer">
             Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -

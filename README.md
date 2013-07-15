@@ -30,7 +30,7 @@ A manifest file contains a JSON object with the following properties:
  - *files*: An array of files
  - *rootDir*: Root directory where files are located. Relative to the manifest pathname
  - *home*: The file to display as the manual homepage (won't be used when computing the TOC)
- - *category*: Category of the manual (used on the homepage) (optional, default none)
+ - *category*: Category of the manual (used on the index page) (optional, default none)
  - *css*: Filename or URL of a CSS stylesheet that will be included in the page
  - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
@@ -57,16 +57,36 @@ Available options:
  - *--port* : The port on which the HTTP server shoud listen
  - *--watch* : Watch files for modifications and reload them automatically
  - *--manifests-only* : Do not treat the last argument as the output dir but also as a manifest
+ - *--theme* : Name of bundled theme or path to custom theme
  - *--title* : Title of the index page
- - *--no-header*: Hides the header
- - *--no-toc*: Hides the table of content sidebar
  - *--base-url* : Base url of all links
  - *--index-only* : Only generate the index file. The last argument should be the filename of the index
- - *--templates-dir* : Path of custom templates for the pages. [Examples of templates](https://github.com/maximebf/beautiful-docs/tree/master/src/templates).
  - *--version* : Display the installed version of beautiful-docs
 
 Default output dir is *./out*.  
 You can specify the path to a directory containing markdown files (\*.md) instead of a manifest file.
+
+## Theming
+
+Beautiful Docs makes it very easy for you to create your own theme.
+A theme is made of 4 templates:
+
+ - *layout.html*: used as the layout of *page.html* and *home.html*. Will receive a `@content` variable with the content of the inner template
+ - *page.html*: used to render each file in the files array
+ - *home.html*: used to render the home page (the *home* option in the manifest or the first file in the files array). It's optional and *page.html* will be used instead.
+ - *index.html*: used to render the index page of multiple manifests (optional if you don't plan on using this feature)
+
+A few variables are available inside your templates:
+
+ - `@manifest`: the current manifest (unless for *index.html* where it is an index of manifests and the variable is named `@manifests`)
+ - `@baseUrl`: base url
+ - `@title`: the title provided through the command line
+
+If the theme folder contains an *assets* folder, it will be copied over to the output directory.
+The url of this assets folder is available through the `@assetsUrl` variable.
+
+Beautiful Docs comes with 2 themes: default and minimal. Have a look at them in the 
+*src/themes* folder to learn more about creating your own theme.
 
 ## Multiple manifests
 

@@ -10,12 +10,10 @@ switches =
     watch: ['--watch', 'Watch files for modifications and reload them automatically']
     manifestsOnly: ['--manifests-only', 'Do not treat the last argument as the output dir but also as a manifest']
     title: ['--title', 'Title of the index page']
-    noHeader: ['--no-header', 'Hides the header']
-    noToc: ['--no-toc', 'Hides the table of content sidebar']
     baseUrl: ['--base-url', 'Base url of all links']
     indexOnly: ['--index-only', 'Only generate the index file. The last argument should be the filename of the index']
     version: ['--version', 'Display the installed version of beautiful-docs']
-    templatesDir: ['--templates-dir', 'Directory of custom templates']
+    theme: ['--theme', 'Name of bundled theme or path to custom theme']
 
 argv = []
 options =
@@ -25,11 +23,10 @@ options =
     watch: false
     manifestsOnly: false
     title: 'Beautiful Docs'
-    baseUrl: ''
-    noHeader: false
-    noToc: false
+    baseUrl: '/'
     indexOnly: false
     version: false
+    theme: 'default'
 
 for arg in process.argv.slice(2)
     if arg.substr(0, 2) == '--'
@@ -69,8 +66,7 @@ generateManifest = (manifest, callback=null) ->
     bfdocs.generate manifest, dest, opts, callback
 
 generateIndex = (filename, callback=null) ->
-    bfdocs.generateIndex options.title || 'Beautiful docs', 
-        manifests, filename, options, callback
+    bfdocs.generateIndex options.title || 'Beautiful docs', manifests, filename, options, callback
 
 startServer = (err) ->
     if options.server
@@ -84,13 +80,14 @@ handleManifest = (err, manifest) ->
     if err
         console.log "An error occured while opening a manifest: #{err}"
         return
+
     manifests.push manifest
+    indexFilename = path.join(destDir, 'index.html')
 
     if options.indexOnly
-        generateIndex(destDir) if --lock == 0
+        generateIndex(indexFilename, startServer) if --lock == 0
         return
     
-    indexFilename = path.join(destDir, 'index.html')
     generateManifest manifest, (err) ->
         if err
             lock--

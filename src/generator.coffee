@@ -6,6 +6,7 @@ _ = require 'underscore'
 less = require 'less'
 coffee = require 'coffee-script'
 async = require 'async'
+S = require 'string'
 
 class Generator
     # Generates the html files
@@ -13,28 +14,41 @@ class Generator
     # options - An object with options for the generation and the templates
     constructor: (options) ->
         @options = _.extend({
-            assetsDir: path.join(__dirname, "assets")
-            templatesDir: path.join(__dirname, "templates/beautiful-docs")
-            templates: {layout: 'layout.html', page: 'page.html', index: 'index.html'}
-            baseUrl: ''
-            noHeader: false,
-            noToc: false
+            theme: 'default',
+            assetsFolder: 'assets',
+            assetsUrl: null,
+            copyAssets: true,
+            compileLessOrCoffee: true,
+            templates: {layout: 'layout.html', page: 'page.html', index: 'index.html', home: 'home.html'},
+            defaultCategory: "All projects",
+            baseUrl: '/'
         }, options)
 
-        url = @options.baseUrl
-        l = url.length
-        @options.baseUrl += '/' if l > 0 and url[l-l] isnt '/'
+        @options.baseUrl = S(@options.baseUrl).ensureRight('/')
+        if @options.assetsUrl == null
+            @options.assetsUrl = S(@options.baseUrl + @options.assetsFolder).ensureRight('/')
 
-    # Public: Renders a template "filename" located in options.templatesDir
+    getThemeFilename: (filename, callback) ->
+        fs.exists @options.theme, (exists) =>
+            if exists
+                filename = path.join @options.theme, filename
+            else
+                filename = path.join __dirname, "themes", @options.theme, filename
+            fs.exists filename, (exists) -> callback filename, exists
+
+    # Public: Renders a template "filename" located in the theme folder
     #
     # filename  - Filename of the template
     # vars      - An object that will become this in the template
     # callback  - A function that is called with the rendered html
     render: (filename, vars, callback) ->
-        fs.readFile path.join(@options.templatesDir, filename), (err, data) =>
-            return callback(err) if err
-            html = eco.render data.toString(), _.extend({}, @options, vars)
-            callback null, html
+        @getThemeFilename filename, (filename, exists) =>
+            if not exists
+                return callback("Missing template: " + filename)
+            fs.readFile filename, (err, data) =>
+                return callback(err) if err
+                html = eco.render data.toString(), _.extend({}, @options, vars)
+                callback null, html
 
     # Public: Equivalent of mkdir -p
     #
@@ -72,17 +86,21 @@ class Generator
     generateIndex: (title, manifests, filename, callback=null) ->
         categories = {}
         for m in manifests
-            name = m.category || 'All Projects'
+            name = m.category || @options.defaultCategory
             if not categories[name]
                 categories[name] = []
             categories[name].push m
 
         vars = title: title, categories: categories
-        @render @options.templates.index, vars, (err, content) ->
+        @render @options.templates.index, vars, (err, content) =>
             if err
                 callback(err) if callback
                 return
-            fs.writeFile filename, content, callback
+            @mkdir path.dirname(filename), (err) ->
+                if err
+                    callback(err) if callback
+                    return
+                fs.writeFile filename, content, callback
 
     # Public: Generates all html files associated to a manifest. Also copies
     # relative assets references in the manifest files
@@ -96,9 +114,9 @@ class Generator
         render = (filename, vars, callback) =>
             @render filename, _.extend({manifest: manifest}, vars), callback
 
-        renderFile = (file, filename, cb) =>
+        renderFile = (file, filename, template, cb) =>
             copyAsset = (a, c) => @copy file.makeRelativeUri(a), path.join(destDir, a), c
-            render @options.templates.page, {content: file.content}, (err, content) =>
+            render template, {content: file.content}, (err, content) =>
                 return cb(err) if err
                 render @options.templates.layout, {content: content}, (err, content) ->
                     return cb(err) if err
@@ -106,12 +124,19 @@ class Generator
                         return cb(err) if err
                         async.forEach file.assets, copyAsset, cb
 
-        renderFiles = (cb) ->
+        renderFiles = (cb) =>
             lock = manifest.files.length
             for i, file of manifest.files
                 if manifest.ignoreFirstFileForToc and i == 0 then continue
                 allContent += file.content + "\n"
-                renderFile file, file.slug, -> cb() if --lock == 0
+                renderFile file, file.slug, @options.templates.page, -> cb() if --lock == 0
+
+        renderHomepage = (cb) =>
+            template = @options.templates.home
+            @getThemeFilename template, (filename, exists) =>
+                if not exists
+                    template = @options.templates.page
+                renderFile manifest.files[0], 'index', template, cb
 
         renderAll = (cb) =>
             content = "<div id='content'>#{allContent}</div>"
@@ -127,21 +152,28 @@ class Generator
             else
                 cb()
 
+        copyAssets = (cb) =>
+            return cb() if not @options.copyAssets
+            @getThemeFilename @options.assetsFolder, (srcDir, exists) =>
+                return cb() if not exists
+                @copyAssets srcDir, path.join(destDir, @options.assetsFolder), @options.compileLessOrCoffee, cb
+
         async.series([
             ((cb) => @mkdir destDir, cb),
-            ((cb) -> renderFile manifest.files[0], 'index', cb),
+            renderHomepage,
             renderFiles,
             renderAll,
-            copyStylesheet
+            copyStylesheet,
+            copyAssets
         ], (err) -> callback(err) if callback)
 
     # Public: Copies all files from srcDir to destDir. Eventually transforms less and coffee files.
     #
+    # srcDir                : Where the original assets are located
     # destDir               : Where to copy the assets to
-    # srcDir                : Where the original assets are located, default to @options.assetsDir
     # compileLessOrCoffee   : Whether to transform less and coffee files
     # callback              : A function that will be called once all files are copied
-    copyAssets: (destDir, srcDir=@options.assetsDir, compileLessOrCoffee=true, callback=null) ->
+    copyAssets: (srcDir, destDir, compileLessOrCoffee=true, callback=null) ->
         if typeof(srcDir) == 'function'
             callback = srcDir
             srcDir = @options.assetsDir
@@ -165,7 +197,7 @@ class Generator
             fs.stat pathname, (err, stat) =>
                 return cb(err) if err
                 if stat.isDirectory()
-                    @copyAssets path.join(destDir, filename), pathname, compileLessOrCoffee, cb
+                    @copyAssets pathname, path.join(destDir, filename), compileLessOrCoffee, cb
                 else
                     copyFile pathname, filename, cb
 
