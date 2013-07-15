@@ -3,9 +3,9 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title><%= @manifest.title or @title %></title>
-    <link type="text/css" rel="stylesheet" href="<%= @assetsUrl %>css/reset.css">
-    <link type="text/css" rel="stylesheet" href="<%= @assetsUrl %>css/docs.css">
-    <link type="text/css" rel="stylesheet" href="<%= @assetsUrl %>css/print.css" media="print">
+    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>assets/css/reset.css">
+    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>assets/css/docs.css">
+    <link type="text/css" rel="stylesheet" href="<%= @baseUrl %>assets/css/print.css" media="print">
     <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/<%= @manifest.options.codeHighlightTheme || 'sunburst' %>.min.css">
     <% if @manifest.options.css: %>
         <link type="text/css" rel="stylesheet" href="<%- @manifest.options.css %>">
@@ -23,7 +23,7 @@
             });
         </script>
     <% end %>
-    <script type="text/javascript" src="<%= @assetsUrl %>js/viewer.js"></script>
+    <script type="text/javascript" src="<%= @baseUrl %>assets/js/viewer.js"></script>
 </head>
 <body>
     <div id="page">

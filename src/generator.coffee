@@ -15,19 +15,17 @@ class Generator
     constructor: (options) ->
         @options = _.extend({
             theme: 'default',
-            assetsFolder: 'assets',
-            assetsUrl: null,
-            copyAssets: true,
-            compileLessOrCoffee: true,
-            templates: {layout: 'layout.html', page: 'page.html', index: 'index.html', home: 'home.html'},
+            compileThemeFiles: true,
+            templates: {layout: '_layout.html', page: '_page.html', manifests: '_manifests.html'},
             defaultCategory: "All projects",
             baseUrl: '/'
         }, options)
-
         @options.baseUrl = S(@options.baseUrl).ensureRight('/')
-        if @options.assetsUrl == null
-            @options.assetsUrl = S(@options.baseUrl + @options.assetsFolder).ensureRight('/')
 
+    # Public: Returns the pathname of a file inside the theme folder
+    # 
+    # filename   - Filename of the file
+    # callback
     getThemeFilename: (filename, callback) ->
         fs.exists @options.theme, (exists) =>
             if exists
@@ -36,19 +34,29 @@ class Generator
                 filename = path.join __dirname, "themes", @options.theme, filename
             fs.exists filename, (exists) -> callback filename, exists
 
-    # Public: Renders a template "filename" located in the theme folder
+    # Public: Renders a template "filename"
     #
     # filename  - Filename of the template
     # vars      - An object that will become this in the template
     # callback  - A function that is called with the rendered html
     render: (filename, vars, callback) ->
-        @getThemeFilename filename, (filename, exists) =>
-            if not exists
-                return callback("Missing template: " + filename)
-            fs.readFile filename, (err, data) =>
-                return callback(err) if err
-                html = eco.render data.toString(), _.extend({}, @options, vars)
-                callback null, html
+        fs.readFile filename, (err, data) =>
+            return callback(err) if err
+            html = eco.render data.toString(), _.extend({}, @options, vars)
+            callback null, html
+
+    # Public: Renders a template "filename" and wrapped it in the layout
+    #
+    # filename  - Filename of the template
+    # vars      - An object that will become this in the template
+    # callback  - A function that is called with the rendered html
+    renderWithLayout: (filename, vars, callback) ->
+        @render filename, vars, (err, content) =>
+            return callback(err) if err
+            @getThemeFilename @options.templates.layout, (filename, exists) =>
+                if not exists
+                    return callback("Missing templates: " + filename)
+                @render filename, _.extend({}, vars, {content: content}), callback
 
     # Public: Equivalent of mkdir -p
     #
@@ -92,15 +100,18 @@ class Generator
             categories[name].push m
 
         vars = title: title, categories: categories
-        @render @options.templates.index, vars, (err, content) =>
-            if err
-                callback(err) if callback
-                return
-            @mkdir path.dirname(filename), (err) ->
+        @getThemeFilename @options.templates.manifests, (tplname, exists) =>
+            if not exists
+                return callback("Missing template: " + tplname)
+            @render tplname, vars, (err, content) =>
                 if err
                     callback(err) if callback
                     return
-                fs.writeFile filename, content, callback
+                @mkdir path.dirname(filename), (err) ->
+                    if err
+                        callback(err) if callback
+                        return
+                    fs.writeFile filename, content, callback
 
     # Public: Generates all html files associated to a manifest. Also copies
     # relative assets references in the manifest files
@@ -111,14 +122,13 @@ class Generator
     generate: (manifest, destDir, callback=null) ->
         allContent = ''
 
-        render = (filename, vars, callback) =>
-            @render filename, _.extend({manifest: manifest}, vars), callback
-
-        renderFile = (file, filename, template, cb) =>
+        renderFile = (file, filename, cb) =>
             copyAsset = (a, c) => @copy file.makeRelativeUri(a), path.join(destDir, a), c
-            render template, {content: file.content}, (err, content) =>
-                return cb(err) if err
-                render @options.templates.layout, {content: content}, (err, content) ->
+            vars =  {manifest: manifest, content: file.content}
+            @getThemeFilename @options.templates.page, (tplname, exists) =>
+                if not exists
+                    return cb("Missing template: " + tplname)
+                @renderWithLayout tplname, vars, (err, content) ->
                     return cb(err) if err
                     fs.writeFile path.join(destDir, filename + '.html'), content, (err) ->
                         return cb(err) if err
@@ -129,20 +139,17 @@ class Generator
             for i, file of manifest.files
                 if manifest.ignoreFirstFileForToc and i == 0 then continue
                 allContent += file.content + "\n"
-                renderFile file, file.slug, @options.templates.page, -> cb() if --lock == 0
+                renderFile file, file.slug, -> cb() if --lock == 0
 
         renderHomepage = (cb) =>
-            template = @options.templates.home
-            @getThemeFilename template, (filename, exists) =>
-                if not exists
-                    template = @options.templates.page
-                renderFile manifest.files[0], 'index', template, cb
+            renderFile manifest.files[0], 'index', cb
 
         renderAll = (cb) =>
             content = "<div id='content'>#{allContent}</div>"
-            render @options.templates.layout, {content: content}, (err, content) ->
-                return cb(err) if err
-                fs.writeFile path.join(destDir, 'all.html'), content, cb
+            @getThemeFilename @options.templates.layout, (filename, exists) =>
+                @render filename, {manifest: manifest, content: content}, (err, content) ->
+                    return cb(err) if err
+                    fs.writeFile path.join(destDir, 'all.html'), content, cb
 
         copyStylesheet = (cb) =>
             return cb() if not manifest.options.css?
@@ -152,11 +159,10 @@ class Generator
             else
                 cb()
 
-        copyAssets = (cb) =>
-            return cb() if not @options.copyAssets
-            @getThemeFilename @options.assetsFolder, (srcDir, exists) =>
+        copyThemeFiles = (cb) =>
+            @getThemeFilename '.', (srcDir, exists) =>
                 return cb() if not exists
-                @copyAssets srcDir, path.join(destDir, @options.assetsFolder), @options.compileLessOrCoffee, cb
+                @copyFiles srcDir, destDir, @options.compileThemeFiles, {manifest: manifest}, cb
 
         async.series([
             ((cb) => @mkdir destDir, cb),
@@ -164,40 +170,42 @@ class Generator
             renderFiles,
             renderAll,
             copyStylesheet,
-            copyAssets
+            copyThemeFiles
         ], (err) -> callback(err) if callback)
 
-    # Public: Copies all files from srcDir to destDir. Eventually transforms less and coffee files.
+    # Public: Copies all files from srcDir to destDir. 
+    # Eventually transforms less and coffee files and render html files
     #
     # srcDir                : Where the original assets are located
     # destDir               : Where to copy the assets to
-    # compileLessOrCoffee   : Whether to transform less and coffee files
+    # compileFiles          : Whether to transform less and coffee files and render html files
     # callback              : A function that will be called once all files are copied
-    copyAssets: (srcDir, destDir, compileLessOrCoffee=true, callback=null) ->
-        if typeof(srcDir) == 'function'
-            callback = srcDir
-            srcDir = @options.assetsDir
-
+    copyFiles: (srcDir, destDir, compileFiles=true, tplVars={}, callback=null) ->
         copyFile = (pathname, filename, cb) =>
-            if compileLessOrCoffee and path.extname(filename) == '.less'
+            if compileFiles and path.extname(filename) == '.less'
                 fs.readFile pathname, (err, data) ->
                     return cb(err) if err
                     target = path.join destDir, path.basename(filename, path.extname(filename)) + '.css'
                     less.render data.toString(), (e, css) ->  fs.writeFile target, css, cb
-            else if compileLessOrCoffee and path.extname(filename) == '.coffee'
+            else if compileFiles and path.extname(filename) == '.coffee'
                 fs.readFile pathname, (err, data) ->
                     return cb(err) if err
                     target = path.join destDir, path.basename(filename, path.extname(filename)) + '.js'
                     fs.writeFile target, coffee.compile(data.toString()), cb
-            else
+            else if compileFiles and path.extname(filename) == '.html' and not S(filename).startsWith('_')
+                @renderWithLayout pathname, tplVars, (err, content) ->
+                    fs.writeFile path.join(destDir, filename), content, cb
+            else if path.extname(filename) != '.html' or not S(filename).startsWith('_')
                 @copy pathname, path.join(destDir, filename), cb
+            else
+                cb()
 
         handleFile = (filename, cb) =>
             pathname = path.join srcDir, filename
             fs.stat pathname, (err, stat) =>
                 return cb(err) if err
                 if stat.isDirectory()
-                    @copyAssets pathname, path.join(destDir, filename), compileLessOrCoffee, cb
+                    @copyFiles pathname, path.join(destDir, filename), compileFiles, tplVars, cb
                 else
                     copyFile pathname, filename, cb
 

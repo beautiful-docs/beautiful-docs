@@ -2,13 +2,16 @@
 
 Beautiful docs is a documentation viewer based on markdown files.  
 Documentation manuals can be described in a manifest file using JSON.
+It can also generate a static site.
 
 Features:
 
  - [Markdown syntax](http://daringfireball.net/projects/markdown/syntax) (with support for [Github Flavored Markdown](http://github.github.com/github-flavored-markdown/))
  - Uses files (store them anywhere, in git for example)
  - Automatically generate the table of content
- - Clean and simple to use interface
+ - Very easy to create your custom theme
+ - Generate any kind of pages with your custom site. Easily create a presentation website for your project.
+ - Clean and simple to use default theme
  - Stylesheet for printing
  - Supports [embedly](http://embed.ly/)
  - Easy to customize (eg.: for organizations)
@@ -71,10 +74,9 @@ You can specify the path to a directory containing markdown files (\*.md) instea
 Beautiful Docs makes it very easy for you to create your own theme.
 A theme is made of 4 templates:
 
- - *layout.html*: used as the layout of *page.html* and *home.html*. Will receive a `@content` variable with the content of the inner template
- - *page.html*: used to render each file in the files array
- - *home.html*: used to render the home page (the *home* option in the manifest or the first file in the files array). It's optional and *page.html* will be used instead.
- - *index.html*: used to render the index page of multiple manifests (optional if you don't plan on using this feature)
+ - *\_layout.html*: used as the layout of *\_page.html*. Will receive a `@content` variable with the content of the inner template
+ - *\_page.html*: used to render each file in the files array. Will receive a `@content` variable with the content of the page
+ - *\_manifests.html*: used to render the index page of multiple manifests (optional if you don't plan on using this feature)
 
 A few variables are available inside your templates:
 
@@ -82,8 +84,8 @@ A few variables are available inside your templates:
  - `@baseUrl`: base url
  - `@title`: the title provided through the command line
 
-If the theme folder contains an *assets* folder, it will be copied over to the output directory.
-The url of this assets folder is available through the `@assetsUrl` variable.
+All other files in the theme folder are copied over to the output directory.
+Less and Coffee files will be automatically converted. HTML files will be rendered and wrapped in the layout.
 
 Beautiful Docs comes with 2 themes: default and minimal. Have a look at them in the 
 *src/themes* folder to learn more about creating your own theme.
