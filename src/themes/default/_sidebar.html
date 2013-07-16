@@ -16,4 +16,13 @@
     <nav id="toc">
         <%= toc_level(@manifest.tableOfContent, @manifest.maxTocLevel) %>
     </nav>
+    <% if @manifest.links: %>
+    <nav id="links">
+        <ul>
+            <% for link in @manifest.links: %>
+            <li><a href="<%= link[1] %>"><%= link[0] %></a></li>
+            <% end %>
+        </ul>
+    </nav>
+    <% end %>
 </div>

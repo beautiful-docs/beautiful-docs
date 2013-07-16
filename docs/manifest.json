@@ -2,5 +2,9 @@
     "title": "Beautiful docs",
     "github": "maximebf/beautiful-docs",
     "rootDir": "..",
-    "files": ["README.md"]
+    "files": ["README.md"],
+    "links": [
+        ["View on Github", "http://github.com/maximebf/beautiful-docs"],
+        ["Report an issue", "http://github.com/maximebf/beautiful-docs/issues"]
+    ]
 }

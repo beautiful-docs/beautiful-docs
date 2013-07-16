@@ -135,6 +135,7 @@ class Manifest
         @maxTocLevel = options.maxTocLevel ? 2
         @makeAssetsRelativeToGithub = options.makeAssetsRelativeToGithub ? false
         @rootDir = options.rootDir ? '.'
+        @links = options.links ? []
         @options = _.extend({}, options)
         
     # Public: Adds files
