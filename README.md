@@ -73,9 +73,10 @@ You can specify the path to a directory containing markdown files (\*.md) instea
 The default theme adds the following options to your manifest.json file:
 
  - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
- - *googleAnalytics*: Adds a Google Analytics Tracking code to the generated website
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
  - *github*: Repository name on github (user/repo) used to display a "Fork me on Github" banner
+ - *googleAnalytics*: Google Analytrics Trackind ID. Adds a Google Analytics Tracking code to the generated website
+ - *disqus*: Disqus Shortname. Adds a Disqus comment thread to every documentation page
 
 The theme has a search capability. It will generate a search index at compile time and
 you will be able to search your documentation without the need of a server. Everything is done client side!
