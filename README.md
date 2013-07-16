@@ -73,6 +73,7 @@ You can specify the path to a directory containing markdown files (\*.md) instea
 The default theme adds the following options to your manifest.json file:
 
  - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
+ - *googleAnalytics*: Adds a Google Analytics Tracking code to the generated website
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
  - *github*: Repository name on github (user/repo) used to display a "Fork me on Github" banner
 

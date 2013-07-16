@@ -1,6 +1,7 @@
 {
     "title": "Beautiful docs",
     "github": "maximebf/beautiful-docs",
+    "googleAnalytics": "aaa",
     "rootDir": "..",
     "files": ["README.md"],
     "links": [

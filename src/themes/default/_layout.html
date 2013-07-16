@@ -13,6 +13,7 @@
     <script type="text/javascript" src="<%= @baseUrl %>assets/js/jquery-1.10.1.min.js"></script>
     <script type="text/javascript" src="http://yandex.st/highlightjs/6.1/highlight.min.js"></script>
     <script type="text/javascript" src="<%= @baseUrl %>assets/js/lunr.min.js"></script>
+
     <% if @manifest.options.embedly: %>
         <script type="text/javascript" src="http://scripts.embed.ly/jquery.embedly.min.js"></script>
         <script type="text/javascript">
@@ -24,8 +25,22 @@
             });
         </script>
     <% end %>
+
     <script type="text/javascript">var BASE_URL = "<%= @baseUrl %>";</script>
     <script type="text/javascript" src="<%= @baseUrl %>assets/js/viewer.js"></script>
+
+    <% if @manifest.options.googleAnalytics: %>
+        <script type="text/javascript">
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', '<%= @manifest.options.googleAnalytics %>']);
+          _gaq.push(['_trackPageview']);
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+        </script>
+    <% end %>
 </head>
 <body>
     <div id="page">
