@@ -2,12 +2,13 @@
 
 Beautiful docs is a documentation viewer based on markdown files.  
 Documentation manuals can be described in a manifest file using JSON.
-It can also generate a static site.
+It can also generate a static pages.
 
 Features:
 
  - [Markdown syntax](http://daringfireball.net/projects/markdown/syntax) (with support for [Github Flavored Markdown](http://github.github.com/github-flavored-markdown/))
- - Uses files (store them anywhere, in git for example)
+ - The output is fully static and can be hosted on Github or S3
+ - Uses files, no database (store them anywhere, in git for example)
  - Automatically generate the table of content
  - Very easy to create your custom theme
  - Generate static pages alongside your documentation (eg: easily create a presentation website for your project)
