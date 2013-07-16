@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Beautiful docs</title>
+
+    <link type="text/css" rel="stylesheet" href="/assets/css/reset.css">
+    <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/sunburst.min.css">
+    <link type="text/css" rel="stylesheet" href="/assets/css/docs.css">
+    <link type="text/css" rel="stylesheet" href="/assets/css/print.css" media="print">
+    
+
+    <script type="text/javascript" src="/assets/js/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="http://yandex.st/highlightjs/6.1/highlight.min.js"></script>
+    <script type="text/javascript" src="/assets/js/lunr.min.js"></script>
+
+    
+
+    <script type="text/javascript">var BASE_URL = "/";</script>
+    <script type="text/javascript" src="/assets/js/viewer.js"></script>
+
+    
+</head>
+<body>
+    <div id="page">
+        <a name="top" />
+        <header id="header">
+            <h1><a href="/">Beautiful docs</a></h1>
+        </header>
+        
+
+<div id="sidebar">
+    <form action="/search.html"><input id="search" type="text" placeholder="Search" name="q" /></form>
+    <nav id="toc">
+        
+    <ol>
+    
+        <li>
+            <a href="/readme.html#beautiful-docs">Beautiful docs</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="/readme.html#manifests">Manifests</a>
+            
+        </li>
+    
+        <li>
+            <a href="/readme.html#usage">Usage</a>
+            
+        </li>
+    
+        <li>
+            <a href="/readme.html#default-theme">Default theme</a>
+            
+        </li>
+    
+        <li>
+            <a href="/readme.html#theming-and-static-pages-generation">Theming and static pages generation</a>
+            
+        </li>
+    
+        <li>
+            <a href="/readme.html#multiple-manifests">Multiple manifests</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+    </nav>
+    
+    <nav id="links">
+        <ul>
+            
+            <li><a href="http://github.com/maximebf/beautiful-docs">View on Github</a></li>
+            
+            <li><a href="http://github.com/maximebf/beautiful-docs/issues">Report an issue</a></li>
+            
+        </ul>
+    </nav>
+    
+</div>
+
+        <div id="content">
+            <h2>Search results for "<span id="search-q"></span>"</h2>
+<ul id="search-results"></ul>
+<script type="text/javascript" src="/lunr-index.js"></script>
+<script type="text/javascript">
+    function getParameterByName(name) {
+        name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+
+    $(function() {
+        var q = getParameterByName('q'), 
+            ul = $('#search-results').empty(),
+            results = index.search(q);
+
+        $('#search-q').text(q);
+        if (results.length > 0) {
+            for (var i = 0; i < results.length; i++) {
+                ul.append($('<li><a href="' + results[i].ref + '">' + documentTitles[results[i].ref] + '</a></li>'));
+            }
+        } else {
+            ul.append($('<li class="no-results">No results found</li>'));
+        }
+    })
+</script>
+
+        </div>
+        <footer id="footer">
+            Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
+            <a href="#top">Back to top</a> - <a href="/all.html">Everything on a single page</a>
+            - <a href="?print=1">Print current page</a> - <a href="/all.html?print=1">Print all pages</a>
+            
+                <a href="https://github.com/maximebf/beautiful-docs" id="fork-me-on-github">Fork me on Github</a>
+            
+        </footer>
+    </div>
+</body>
+</html>
