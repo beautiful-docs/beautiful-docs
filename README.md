@@ -2,7 +2,7 @@
 
 Beautiful docs is a documentation viewer based on markdown files.  
 Documentation manuals can be described in a manifest file using JSON.
-It can also generate a static pages.
+It can also generate static pages.
 
 Features:
 
