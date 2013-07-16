@@ -115,6 +115,9 @@ The special *layout* property allows your to wrapped the rendered content
 of the current file inside a layout. It must be a filename relative to the
 theme path.
 
+Templates have access to the `@include(filename)` function to include files.
+The filename must be relative to the current template filename.
+
 All other files in the theme folder are copied over to the output directory.
 Less and Coffee files will be automatically converted.
 All files starting with an underscore will be ignored.

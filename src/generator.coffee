@@ -70,6 +70,8 @@ class Generator
             return callback(err) if err
             [header, data] = @parseFileHeader data
             vars = _.extend({}, vars, header)
+            vars["include"] = (relfilename) => 
+                @renderString fs.readFileSync(path.join(path.dirname(filename), relfilename)), vars
             content = @renderString data, vars
             
             if header.layout
