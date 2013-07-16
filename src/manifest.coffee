@@ -64,27 +64,43 @@ class ManifestFile
     # Private: Transforms markdown files to html, extracting
     # urls of relative image and adding anchor tags before all <h> tags
     render: ->
-        html = marked @raw
-
         @assets = []
-        imgs = html.match /<img[^>]*>/gi
-        for img in imgs || []
-            src = img.match /src=("|')([^"']+)\1/i
-            if src and not src[2].match /^(https?):\/\//
-                if not @manifest.options.makeAssetsRelativeToGithub
-                    @assets.push src[2]
-                else
-                    url = 'https://github.com/' + @manifest.options.makeAssetsRelativeToGithub + '/raw/master/' + src[2]
-                    new_img = img.replace src[2], url
-                    html = html.replace img, new_img
+        @sections = []
+        @html = ''
 
-        hTags = html.match /<h([1-6])>.+<\/h\1>/gi
-        for hTag in hTags || []
-            title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
-            anchor = S(title).slugify().s
-            html = html.replace hTag, '<a name="' + anchor + '"></a>' + hTag
+        convertToHtml = (markdown) -> 
+            html = marked markdown
+            imgs = html.match /<img[^>]*>/gi
+            for img in imgs || []
+                src = img.match /src=("|')([^"']+)\1/i
+                if src and not src[2].match /^(https?):\/\//
+                    if not @manifest.options.makeAssetsRelativeToGithub
+                        @assets.push src[2]
+                    else
+                        url = 'https://github.com/' + @manifest.options.makeAssetsRelativeToGithub + '/raw/master/' + src[2]
+                        new_img = img.replace src[2], url
+                        html = html.replace img, new_img
 
-        @content = html
+            hTags = html.match /<h([1-6])>.+<\/h\1>/gi
+            for hTag in hTags
+                title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
+                anchor = S(title).stripTags().decodeHTMLEntities().slugify().s
+                html = html.replace hTag, '<a name="' + anchor + '"></a>' + hTag
+
+        titles = @raw.match /^\#+ (.+)$/gm
+        for i, mdTitle of titles
+            i = parseInt i
+            title = S(mdTitle).trim().replace(/\#*$/, '').trim().s
+            level = title.indexOf(' ')
+            title = S(title).replace(/^\#+/, '').trim().s
+            if i == 0 then @title = title
+            slug = S(title).slugify().s
+            content = @raw.substr @raw.indexOf(mdTitle)
+            if i < titles.length - 1
+                content = content.substr 0, content.indexOf(titles[i+1])
+            html = convertToHtml content
+            @html += html
+            @sections.push {slug: slug, level: level, title: title, markdown: content, html: html}
 
 
 # Represents a manifest
@@ -150,27 +166,22 @@ class Manifest
         currentLevel = 0
         for i, file of @files
             if @ignoreFirstFileForToc and i == '0' then continue
-            hTags = file.content.match /<h([1-6])>.+<\/h\1>/gi
-            for hTag in hTags || []
-                level = parseInt hTag.substr(2, 1)
-                title = S(hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')).stripTags().decodeHTMLEntities().s
-                anchor = S(title).slugify().s
-                
-                if level > @maxTocLevel then continue
-                if level <= currentLevel
-                    parentScopes = parentScopes.slice 0, parentScopes.length - (currentLevel - level)
+            for section in file.sections
+                if section.level > @maxTocLevel then continue
+                if section.level <= currentLevel
+                    parentScopes = parentScopes.slice 0, parentScopes.length - (currentLevel - section.level)
                     scope = parentScopes.pop()
                     
                 entry = 
                     slug: file.slug
-                    title: title
-                    anchor: anchor
+                    title: section.title
+                    anchor: section.slug
                     childs: []
                     
                 scope.push entry
                 parentScopes.push scope
                 scope = entry.childs
-                currentLevel = level
+                currentLevel = section.level
 
     # Public: Refreshes the manifest options and all files and rebuilds the table of content
     #

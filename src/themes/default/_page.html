@@ -1,21 +1,4 @@
-<% toc_level = (level, maxLevel, currentLevel=1) => %>
-    <ol>
-    <% for entry in level: %>
-        <li>
-            <a href="<%= @baseUrl %><%- entry.slug %>.html#<%= entry.anchor %>"><%= entry.title %></a>
-            <% if entry.childs and currentLevel < maxLevel: %>
-                <%= toc_level(entry.childs, maxLevel, currentLevel + 1) %>
-            <% end %>
-        </li>
-    <% end %>
-</ol>
-<% end %>
-
-<div id="sidebar">
-    <nav id="toc">
-        <%= toc_level(@manifest.tableOfContent, @manifest.maxTocLevel) %>
-    </nav>
-</div>
-<article id="content">
-    <%- @content %>
-</article>
+---
+layout: _layout.html
+---
+<%- @content %>

@@ -7,6 +7,7 @@ less = require 'less'
 coffee = require 'coffee-script'
 async = require 'async'
 S = require 'string'
+yaml = require 'js-yaml'
 
 class Generator
     # Generates the html files
@@ -34,29 +35,50 @@ class Generator
                 filename = path.join __dirname, "themes", @options.theme, filename
             fs.exists filename, (exists) -> callback filename, exists
 
-    # Public: Renders a template "filename"
+    # Public: Renders a template from a string
     #
-    # filename  - Filename of the template
+    # data      - Template string
     # vars      - An object that will become this in the template
-    # callback  - A function that is called with the rendered html
+    renderString: (data, vars) ->
+        return eco.render data.toString(), _.extend({}, @options, vars)
+
+    fileHasHeader: (filename, callback) ->
+        fs.readFile filename, (err, data) ->
+            return callback(err) if err
+            lines = S(data).lines()
+            callback(lines[0] == '---')
+
+    parseFileHeader: (data) ->
+        lines = S(data).lines()
+        if lines[0] != '---'
+            return [false, data]
+
+        lines.shift()
+        header = []
+        for line in lines
+            if line == '---'
+                break
+            else
+                header.push(line)
+
+        data = lines.slice(header.length + 1).join("\n")
+        header = if header.length > 0 then yaml.safeLoad(header.join("\n")) else {}
+        return [header, data]
+
     render: (filename, vars, callback) ->
         fs.readFile filename, (err, data) =>
             return callback(err) if err
-            html = eco.render data.toString(), _.extend({}, @options, vars)
-            callback null, html
-
-    # Public: Renders a template "filename" and wrapped it in the layout
-    #
-    # filename  - Filename of the template
-    # vars      - An object that will become this in the template
-    # callback  - A function that is called with the rendered html
-    renderWithLayout: (filename, vars, callback) ->
-        @render filename, vars, (err, content) =>
-            return callback(err) if err
-            @getThemeFilename @options.templates.layout, (filename, exists) =>
-                if not exists
-                    return callback("Missing templates: " + filename)
-                @render filename, _.extend({}, vars, {content: content}), callback
+            [header, data] = @parseFileHeader data
+            vars = _.extend({}, vars, header)
+            content = @renderString data, vars
+            
+            if header.layout
+                @getThemeFilename header.layout, (tplname, exists) =>
+                    if not exists
+                        return cb("Missing layout: " + tplname)
+                    @render tplname, _.extend({}, vars, {content: content}), callback
+            else
+                callback(null, content)
 
     # Public: Equivalent of mkdir -p
     #
@@ -100,7 +122,7 @@ class Generator
             categories[name].push m
 
         vars = title: title, categories: categories
-        @getThemeFilename @options.templates.manifests, (tplname, exists) =>
+        @getThemeFilename '_manifests.html', (tplname, exists) =>
             if not exists
                 return callback("Missing template: " + tplname)
             @render tplname, vars, (err, content) =>
@@ -124,11 +146,11 @@ class Generator
 
         renderFile = (file, filename, cb) =>
             copyAsset = (a, c) => @copy file.makeRelativeUri(a), path.join(destDir, a), c
-            vars =  {manifest: manifest, content: file.content}
-            @getThemeFilename @options.templates.page, (tplname, exists) =>
+            vars =  {manifest: manifest, content: file.html}
+            @getThemeFilename '_page.html', (tplname, exists) =>
                 if not exists
                     return cb("Missing template: " + tplname)
-                @renderWithLayout tplname, vars, (err, content) ->
+                @render tplname, vars, (err, content) ->
                     return cb(err) if err
                     fs.writeFile path.join(destDir, filename + '.html'), content, (err) ->
                         return cb(err) if err
@@ -138,16 +160,15 @@ class Generator
             lock = manifest.files.length
             for i, file of manifest.files
                 if manifest.ignoreFirstFileForToc and i == 0 then continue
-                allContent += file.content + "\n"
+                allContent += file.html + "\n"
                 renderFile file, file.slug, -> cb() if --lock == 0
 
         renderHomepage = (cb) =>
             renderFile manifest.files[0], 'index', cb
 
         renderAll = (cb) =>
-            content = "<div id='content'>#{allContent}</div>"
-            @getThemeFilename @options.templates.layout, (filename, exists) =>
-                @render filename, {manifest: manifest, content: content}, (err, content) ->
+            @getThemeFilename '_page.html', (tplname, exists) =>
+                @render tplname, {manifest: manifest, content: allContent}, (err, content) ->
                     return cb(err) if err
                     fs.writeFile path.join(destDir, 'all.html'), content, cb
 
@@ -181,33 +202,42 @@ class Generator
     # compileFiles          : Whether to transform less and coffee files and render html files
     # callback              : A function that will be called once all files are copied
     copyFiles: (srcDir, destDir, compileFiles=true, tplVars={}, callback=null) ->
-        copyFile = (pathname, filename, cb) =>
+        compileFile = (data, filename, cb) =>
             if compileFiles and path.extname(filename) == '.less'
-                fs.readFile pathname, (err, data) ->
-                    return cb(err) if err
-                    target = path.join destDir, path.basename(filename, path.extname(filename)) + '.css'
-                    less.render data.toString(), (e, css) ->  fs.writeFile target, css, cb
+                target = path.basename(filename, path.extname(filename)) + '.css'
+                less.render data.toString(), (err, css) -> cb(err, target, css)
             else if compileFiles and path.extname(filename) == '.coffee'
-                fs.readFile pathname, (err, data) ->
-                    return cb(err) if err
-                    target = path.join destDir, path.basename(filename, path.extname(filename)) + '.js'
-                    fs.writeFile target, coffee.compile(data.toString()), cb
-            else if compileFiles and path.extname(filename) == '.html' and not S(filename).startsWith('_')
-                @renderWithLayout pathname, tplVars, (err, content) ->
-                    fs.writeFile path.join(destDir, filename), content, cb
-            else if path.extname(filename) != '.html' or not S(filename).startsWith('_')
-                @copy pathname, path.join(destDir, filename), cb
+                target = path.basename(filename, path.extname(filename)) + '.js'
+                cb(null, target, coffee.compile(data.toString()))
             else
-                cb()
+                cb(null, filename, data)
+
+        copyFile = (pathname, filename, cb) =>
+            fs.readFile pathname, (err, data) =>
+                return cb(err) if err
+                compileFile data, filename, (err, filename, content) ->
+                    return cb(err) if err
+                    fs.writeFile path.join(destDir, filename), content, cb
 
         handleFile = (filename, cb) =>
             pathname = path.join srcDir, filename
             fs.stat pathname, (err, stat) =>
                 return cb(err) if err
                 if stat.isDirectory()
-                    @copyFiles pathname, path.join(destDir, filename), compileFiles, tplVars, cb
+                    @mkdir path.join(destDir, filename), (err) =>
+                        return cb(err) if err
+                        @copyFiles pathname, path.join(destDir, filename), compileFiles, tplVars, cb
+                else if not S(filename).startsWith('_')
+                    @fileHasHeader pathname, (hasHeader) =>
+                        if hasHeader
+                            @render pathname, tplVars, (err, content) ->
+                                compileFile content, filename, (err, filename, content) ->
+                                    return cb(err) if err
+                                    fs.writeFile path.join(destDir, filename), content, cb
+                        else
+                            copyFile pathname, filename, cb
                 else
-                    copyFile pathname, filename, cb
+                    cb()
 
         handleFiles = (err, files, cb) =>
             return cb(err) if err
