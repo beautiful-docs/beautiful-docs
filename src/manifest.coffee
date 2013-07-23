@@ -68,7 +68,7 @@ class ManifestFile
         @sections = []
         @html = ''
 
-        convertToHtml = (markdown) -> 
+        convertToHtml = (markdown) => 
             html = marked markdown
             imgs = html.match /<img[^>]*>/gi
             for img in imgs || []
@@ -82,10 +82,12 @@ class ManifestFile
                         html = html.replace img, new_img
 
             hTags = html.match /<h([1-6])>.+<\/h\1>/gi
-            for hTag in hTags
+            for hTag in hTags || []
                 title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
                 anchor = S(title).stripTags().decodeHTMLEntities().slugify().s
                 html = html.replace hTag, '<a name="' + anchor + '"></a>' + hTag
+
+            return html
 
         titles = @raw.match /^\#+ (.+)$/gm
         for i, mdTitle of titles
@@ -101,6 +103,12 @@ class ManifestFile
             html = convertToHtml content
             @html += html
             @sections.push {slug: slug, level: level, title: title, markdown: content, html: html}
+
+        if @sections.length == 0
+            title = S(extractNameFromUri(@uri)).humanize().s
+            slug = S(title).slugify().s
+            @html = convertToHtml @raw
+            @sections.push {slug: slug, level: 1, title: title, markdown: @raw, html: @html}
 
 
 # Represents a manifest
