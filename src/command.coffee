@@ -2,6 +2,7 @@ bfdocs = require '..'
 fs = require 'fs'
 path = require 'path'
 _ = require 'underscore'
+S = require 'string'
 
 switches =
     help: ['--help', 'Display the help information']
@@ -23,7 +24,7 @@ options =
     watch: false
     manifestsOnly: false
     title: 'Beautiful Docs'
-    baseUrl: '/'
+    baseUrl: ''
     indexOnly: false
     version: false
     theme: 'default'
@@ -62,7 +63,7 @@ generateManifest = (manifest, callback=null) ->
     opts = _.extend({}, options)
     if argv.length > 1
         dest = path.join destDir, manifest.slug
-        _.extend opts, {baseUrl: options.baseUrl + '/' + manifest.slug}
+        _.extend opts, {baseUrl: (if options.baseUrl != '' then S(options.baseUrl).ensureRight('/').s + manifest.slug else manifest.slug)}
     bfdocs.generate manifest, dest, opts, callback
 
 generateIndex = (filename, callback=null) ->

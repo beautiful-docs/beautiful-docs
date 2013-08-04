@@ -19,9 +19,11 @@ class Generator
             compileThemeFiles: true,
             templates: {layout: '_layout.html', page: '_page.html', manifests: '_manifests.html'},
             defaultCategory: "All projects",
-            baseUrl: '/'
+            baseUrl: ''
         }, options)
-        @options.baseUrl = S(@options.baseUrl).ensureRight('/')
+
+        if @options.baseUrl != ''
+            @options.baseUrl = S(@options.baseUrl).ensureRight('/').s
 
     # Public: Returns the pathname of a file inside the theme folder
     # 
