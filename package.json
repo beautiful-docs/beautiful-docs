@@ -1,6 +1,6 @@
 {
   "name":        "beautiful-docs",
-  "version":     "1.0.1",
+  "version":     "1.0.2",
   "author":      "Maxime Bouroumeau-Fuseau (http://maximebf.com)",
   "keywords":    "docs markdown",
   "description": "A documentation viewer based on markdown files",
