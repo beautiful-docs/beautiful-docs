@@ -90,6 +90,7 @@ class ManifestFile
             return html
 
         titles = @raw.match /^\#+ (.+)$/gm
+        remaining_content = @raw
         for i, mdTitle of titles
             i = parseInt i
             title = S(mdTitle).trim().replace(/\#*$/, '').trim().s
@@ -97,13 +98,16 @@ class ManifestFile
             title = S(title).replace(/^\#+/, '').trim().s
             if i == 0 then @title = title
             slug = S(title).slugify().s
-            content = @raw.substr @raw.indexOf(mdTitle)
+            content = remaining_content.substr remaining_content.indexOf(mdTitle)
             if i < titles.length - 1
-                content = content.substr 0, content.indexOf(titles[i+1])
+                next_title_pos = content.indexOf(titles[i+1])
+                content = content.substr 0, next_title_pos
+                remaining_content = remaining_content.substr next_title_pos
             html = convertToHtml content
             @html += html
             @sections.push {slug: slug, level: level, title: title, markdown: content, html: html}
 
+        console.log @sections
         if @sections.length == 0
             title = S(extractNameFromUri(@uri)).humanize().s
             slug = S(title).slugify().s
