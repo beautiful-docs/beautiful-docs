@@ -154,7 +154,7 @@ You can also generate the index file on its own using *--index-only*:
 
 ## Grunt plugin
 
-You can automate the documentation generation using [Grunt][grunt] and the [Beautiful Docs task][tasl]
+You can automate the documentation generation using [Grunt][grunt] and the [Beautiful Docs task][task]
 
 
 [grunt]: http://gruntjs.com
