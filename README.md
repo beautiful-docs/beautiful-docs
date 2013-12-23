@@ -87,7 +87,7 @@ You can use the following css classes to style your documentation (suround a blo
  - *warning*: orange box
  - *tip*: green box
 
-Tables will be automatically formated.
+Tables will be automatically formatted.
 
 ## Theming and static pages generation
 
