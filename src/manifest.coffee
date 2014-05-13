@@ -81,7 +81,7 @@ class ManifestFile
                         new_img = img.replace src[2], url
                         html = html.replace img, new_img
 
-            hTags = html.match /<h([1-6])>.+<\/h\1>/gi
+            hTags = html.match /<h([1-6])[^>]*>.+<\/h\1>/gi
             for hTag in hTags || []
                 title = hTag.substring hTag.indexOf('>') + 1, hTag.lastIndexOf('<')
                 anchor = S(title).stripTags().decodeHTMLEntities().slugify().s
