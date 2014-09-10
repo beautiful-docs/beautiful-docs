@@ -11,7 +11,7 @@ S = require 'string'
 # filename : Extracts only the name (without the extension) of a file
 extractNameFromUri = (filename) ->
     path.basename(filename, path.extname(filename))
-                
+
 # Makes the uri relative to another one
 #
 # uri        : A string representing an URI
@@ -68,7 +68,7 @@ class ManifestFile
         @sections = []
         @html = ''
 
-        convertToHtml = (markdown) => 
+        convertToHtml = (markdown) =>
             html = marked markdown
             imgs = html.match /<img[^>]*>/gi
             for img in imgs || []
@@ -97,7 +97,10 @@ class ManifestFile
             level = title.indexOf(' ')
             title = S(title).replace(/^\#+/, '').trim().s
             if i == 0 then @title = title
-            slug = S(title).slugify().s
+            #string.js slugify removes all periods - marked.js converts periods to dashes
+            # - override slugify function using marked.js regex (styson)
+            #slug = S(title).slugify().s;
+            slug = S(title).replace(/[^\w]+/g, '-').toLowerCase().dasherize().s;
             content = remaining_content.substr remaining_content.indexOf(mdTitle)
             if i < titles.length - 1
                 next_title_pos = content.indexOf(titles[i+1])
@@ -132,7 +135,7 @@ class Manifest
     #
     # options   : An object with the manifest's options
     # uri       : The URI of the manifest
-    constructor: (options={}, @uri=null) -> 
+    constructor: (options={}, @uri=null) ->
         @files = []
         @setOptions options
 
@@ -149,7 +152,7 @@ class Manifest
         @rootDir = options.rootDir ? '.'
         @links = options.links ? []
         @options = _.extend({}, options)
-        
+
     # Public: Adds files
     # The table of content will be rebuild
     #
@@ -162,7 +165,7 @@ class Manifest
             do =>
                 j = d + i
                 ManifestFile.load this, @makeRelativeUri(files[i]), (err, f) =>
-                    if err 
+                    if err
                         lock = -1
                         callback(err) if callback
                         return
@@ -184,13 +187,13 @@ class Manifest
                 if section.level <= currentLevel
                     parentScopes = parentScopes.slice 0, parentScopes.length - (currentLevel - section.level)
                     scope = parentScopes.pop()
-                    
-                entry = 
+
+                entry =
                     slug: file.slug
                     title: section.title
                     anchor: section.slug
                     childs: []
-                    
+
                 scope.push entry
                 parentScopes.push scope
                 scope = entry.childs
@@ -231,7 +234,7 @@ class Manifest
     makeRelativeUri: (uri) ->
         return uri if not @uri
         makeUriRelativeTo makeUriRelativeTo(uri, @rootDir), path.dirname(@uri)
-    
+
     # Watches all the associated files for changes
     #
     # callback : A function that will be called whenever a files changes
@@ -240,5 +243,5 @@ class Manifest
         fs.watchFile @uri, watcher if @uri
         fs.watchFile f.uri, watcher for f in @files
 
-            
+
 module.exports = Manifest
