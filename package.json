@@ -21,7 +21,7 @@
   "dependencies": {
     "coffee-script": ">=1.6.3",
     "eco": ">=1.0.0",
-    "express": ">=3.3.4",
+    "express": ">=3.3.4 <4.0.0",
     "less": ">=1.4.1",
     "marked": ">=0.2.9",
     "underscore": ">=1.5.1",
