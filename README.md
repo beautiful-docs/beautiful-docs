@@ -18,7 +18,7 @@ Features:
  - Easy to customize (eg.: for organizations)
  - Support for multiple manifests with an index page
 
-Checkout [beautifuldocs.com](http://beautifuldocs.com) for an example or [github](https://github.com/maximebf/beautiful-docs) for the sources.  
+Checkout [beautifuldocs.com](http://beautifuldocs.com) for an example or [github](https://github.com/beautiful-docs/beautiful-docs) for the sources.  
 You can find a screenshot of the generated doc [here](https://github.com/maximebf/beautiful-docs/raw/master/docs/screenshot.png).
 
 Install using npm:
@@ -72,7 +72,7 @@ You can specify the path to a directory containing markdown files (\*.md) instea
 
 The default theme adds the following options to your manifest.json file:
 
- - *codeHighlightTheme*: The highlightjs theme for code highlighting (http://softwaremaniacs.org/soft/highlight/en/)
+ - *codeHighlightTheme*: The highlightjs theme for code highlighting (https://highlightjs.org/)
  - *embedly*: Activate embedly with the specified api key. Links to embed must be placed alone in a paragraph.
  - *github*: Repository name on github (user/repo) used to display a "Fork me on Github" banner
  - *googleAnalytics*: Google Analytrics Trackind ID. Adds a Google Analytics Tracking code to the generated website
