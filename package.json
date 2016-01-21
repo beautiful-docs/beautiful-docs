@@ -19,15 +19,15 @@
   },
 
   "dependencies": {
-    "coffee-script": ">=1.6.3",
-    "eco": ">=1.0.0",
-    "express": ">=3.3.4",
-    "less": ">=1.4.1",
-    "marked": ">=0.2.9",
-    "underscore": ">=1.5.1",
-    "async": ">=0.2.9",
-    "string": ">=1.5.0",
-    "js-yaml": ">=2.1.0"
+    "coffee-script": "1.6.3",
+    "eco": "1.0.0",
+    "express": "3.3.4",
+    "less": "1.4.1",
+    "marked": "0.2.9",
+    "underscore": "1.5.1",
+    "async": "0.2.9",
+    "string": "1.5.0",
+    "js-yaml": "2.1.0"
   },
 
   "main": "./lib/index.js",
