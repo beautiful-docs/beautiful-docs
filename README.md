@@ -140,7 +140,7 @@ Beautiful Docs comes with 2 themes: default and minimal. Have a look at them in 
 
 ## Multiple manifests
 
-Beautiful docs can handle multiple manifests at once and generate and index file to
+Beautiful docs can handle multiple manifests at once and generate an index file to
 easily access each of them.
 
     bfdocs [options] [--manifests-only] /path/to/first/manifest.json /path/to/second/manifest.json /path/to/third/manifest.json [/path/to/output/dir]
