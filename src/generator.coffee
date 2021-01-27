@@ -209,7 +209,7 @@ class Generator
         compileFile = (data, filename, cb) =>
             if compileFiles and path.extname(filename) == '.less'
                 target = path.basename(filename, path.extname(filename)) + '.css'
-                less.render data.toString(), (err, output) -> cb(err, target, output.css)
+                less.render data.toString(), (err, output) -> cb(err, target, output)
             else if compileFiles and path.extname(filename) == '.coffee'
                 target = path.basename(filename, path.extname(filename)) + '.js'
                 cb(null, target, coffee.compile(data.toString()))
